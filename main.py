@@ -12,9 +12,9 @@ import argparse
 
 parser = argparse.ArgumentParser(description='|model|env|')
 parser.add_argument("--model",default="model_1_AI",help="DQN|ensemble_DQN|model_1_AI")
-parser.add_argument("--env",default="CartPole-v1",help="CartPole-v1|MountainCar-v0|LunarLander-v2")
+parser.add_argument("--env",default="Acrobot-v1",help="CartPole-v1|MountainCar-v0|LunarLander-v2|Acrobot-v1")
 parser.add_argument("--BATCH_SIZE",type=int,default=300)
-parser.add_argument("--NUM_episodes",type=int,default=500)
+parser.add_argument("--NUM_episodes",type=int,default=400)
 parser.add_argument("--GAMMA",default=0.99)
 parser.add_argument("--TAU",default=0.005)
 parser.add_argument("--PRINT",default=False)
@@ -23,6 +23,7 @@ parser.add_argument("--device",default="cpu")
 parser.add_argument("--NUM_ensemble",default=5)
 parser.add_argument("--file_identify",default="")
 parser.add_argument("--foot_record",default=False)
+parser.add_argument("--max_steps",type=int,default=150000)
 args = parser.parse_args()
 
 ###############################################################################################
@@ -68,6 +69,8 @@ if __name__=="__main__":
         state, info = env.reset()
         state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
         E_count=0
+        if steps_done>args.max_steps:
+            break
         for t in count():
             steps_done+=1
             
@@ -114,8 +117,9 @@ if __name__=="__main__":
             soft_update_model_weights(policy_net,target_net,args.TAU)
 
             if done:
-                print(i_episode," step: ",t+1)
-                logging.info(f" {i_episode}, step: {t+1},E: {E_count/(t+1)}")
+                msg=f" {i_episode}, step: {t+1}, E: {E_count/(t+1)}, Total_steps: {steps_done}"
+                print(msg)
+                logging.info(msg)
                 cum_R.append(t+1)
                 ensemble=True
                 if args.model=="DQN":

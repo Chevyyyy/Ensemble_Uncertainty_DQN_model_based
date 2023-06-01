@@ -114,7 +114,7 @@ def select_action_1_AI_double_uncertainty(policy_net,T_model,state,n_actions,PRI
 
     action_all=torch.arange(n_actions).unsqueeze(1)
 
-    mean_next_state,var=T_model(torch.cat([state.repeat(2,1),action_all],1))
+    mean_next_state,var=T_model(torch.cat([state.repeat(n_actions,1),action_all],1))
 
 
     action_value=torch.zeros((action_all.shape[0]))
