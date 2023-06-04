@@ -110,7 +110,7 @@ def select_action_1_AI(policy_net,T_model,state,n_actions,PRINT_VAR_R=False):
             
     return action,E
 
-def select_action_1_AI_double_uncertainty(policy_net,T_model,state,n_actions,PRINT_VAR_R=False):
+def select_action_1_AI_double_uncertainty(policy_net,T_model,state,n_actions,PRINT_VAR_R=False,FE_return=False):
 
     action_all=torch.arange(n_actions).unsqueeze(1)
 
@@ -146,6 +146,8 @@ def select_action_1_AI_double_uncertainty(policy_net,T_model,state,n_actions,PRI
 
     FE=-np.array(action_value)+np.array(p)
     action=torch.tensor(np.argmin(FE)).unsqueeze(0)
+    if FE_return:
+        return FE
     
     E=0
     if action.item()-action1.item()!=0:
@@ -196,8 +198,6 @@ def select_action_FE_sample_var(policy_net,state,PRINT_VAR_R=False):
         
             
     return action,E
-
-
 
 def optimize_model_ensemble(buffer,policy_net,target_net,GAMMA=0.99,BATCH_SIZE=300,device="cpu",T=False):
     if len(buffer) < BATCH_SIZE:
@@ -250,6 +250,59 @@ def select_action(policy_net,state,env,steps_done,device="cpu"):
     else:
         return torch.tensor([[env.action_space.sample()]], device=device, dtype=torch.long),eps_threshold
 
+def getParticleFE():
+    pass
+
+
+def optimize_actor(buffer,critic_net,policy_net_T,actor_net,optimizer,GAMMA=0.99,BATCH_SIZE=300,device="cpu"):
+    if len(buffer) < BATCH_SIZE:
+        return
+    transitions = buffer.sample(BATCH_SIZE)
+    batch = Transition(*zip(*transitions))
+
+    # Compute a mask of non-final states and concatenate the batch elements
+    # (a final state would've been the one after which simulation ended)
+    non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,
+                                          batch.next_state)), device=device, dtype=torch.bool)
+    non_final_next_states = torch.cat([s for s in batch.next_state
+                                                if s is not None])
+    state_batch = torch.cat(batch.state)
+    action_batch = torch.cat(batch.action)
+    reward_batch = torch.cat(batch.reward)
+
+    # compute state action value by computing the particle propagation value in FE 
+    state_action_cat=torch.cat([state_batch,action_batch],1)
+    next_state_mean,next_state_var=policy_net_T(state_action_cat)
+    
+    e=0
+    value,var_p=critic_net(next_state_mean+e*next_state_var)
+
+    e=0
+    nFE=value+var_p*e
+
+    
+
+    # Compute V(s_{t+1}) for all next states.
+    # Expected values of actions for non_final_next_states are computed based
+    # on the "older" target_net; selecting their best reward with max(1)[0].
+    # This is merged based on the mask, such that we'll have either the expected
+    # state value or 0 in case the state was final.
+    next_state_values = torch.zeros(BATCH_SIZE, device=device)
+    with torch.no_grad():
+        next_state_values[non_final_mask] = critic_net(non_final_next_states)[0].max(1)[0]
+    # Compute the expected Q values
+    expected_state_action_values = (next_state_values * GAMMA) + reward_batch
+
+    # Compute Huber loss
+    TD_error=reward_batch+nFE.gather(1,action_batch)
+    loss=-TD_error*torch.softmax(actor_net(state_batch),1).gather(1,action_batch)
+
+    # Optimize the model
+    optimizer.zero_grad()
+    loss.mean().backward()
+    # In-place gradient clipping
+    torch.nn.utils.clip_grad_value_(actor_net.parameters(), 100)
+    optimizer.step()
 
 def optimize_model(buffer,policy_net,optimizer,target_net,GAMMA=0.99,BATCH_SIZE=300,device="cpu"):
     if len(buffer) < BATCH_SIZE:

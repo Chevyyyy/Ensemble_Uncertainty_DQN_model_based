@@ -9,27 +9,28 @@ from logger import set_log_file
 import logging
 from networks.DQN_model import DQN
 import argparse
+from torch.distributions import Categorical
 
 parser = argparse.ArgumentParser(description='|model|env|')
-parser.add_argument("--model",default="model_1_AI",help="DQN|ensemble_DQN|model_1_AI")
-parser.add_argument("--env",default="Acrobot-v1",help="CartPole-v1|MountainCar-v0|LunarLander-v2|Acrobot-v1")
+parser.add_argument("--model",default="model_1_AI",help="DQN|ensemble_DQN|model_1_AI|model_1_AI_actor")
+parser.add_argument("--env",default="CartPole-v1",help="CartPole-v1|MountainCar-v0|LunarLander-v2|Acrobot-v1|Pendulum-v1")
 parser.add_argument("--BATCH_SIZE",type=int,default=300)
-parser.add_argument("--NUM_episodes",type=int,default=400)
+parser.add_argument("--NUM_episodes",type=int,default=3000)
 parser.add_argument("--GAMMA",default=0.99)
 parser.add_argument("--TAU",default=0.005)
 parser.add_argument("--PRINT",default=False)
 parser.add_argument("--render_mode",default="rgb_array")
 parser.add_argument("--device",default="cpu")
 parser.add_argument("--NUM_ensemble",default=5)
-parser.add_argument("--file_identify",default="")
+parser.add_argument("--ID",default="")
 parser.add_argument("--foot_record",default=False)
-parser.add_argument("--max_steps",type=int,default=150000)
+parser.add_argument("--max_steps",type=int,default=2e5)
 args = parser.parse_args()
 
 ###############################################################################################
 # config the args
 # set the log file
-set_log_file(f"log/{args.model}_{args.env}_{args.file_identify}.txt")
+set_log_file(f"log/{args.model}_{args.env}_{args.ID}.txt")
 # set env
 env = gym.make(args.env,render_mode=args.render_mode)
 # Get number of actions from gym action space
@@ -54,6 +55,15 @@ elif args.model=="model_1_AI":
     policy_net_T = GaussianMixtureMLP(args.NUM_ensemble,n_observations+1, n_observations).to(device)
     target_net_T = GaussianMixtureMLP(args.NUM_ensemble,n_observations+1, n_observations).to(device)
     target_net_T.load_state_dict(policy_net_T.state_dict())
+elif args.model=="model_1_AI_actor":
+    policy_net = GaussianMixtureMLP(args.NUM_ensemble,n_observations, n_actions).to(device)
+    target_net = GaussianMixtureMLP(args.NUM_ensemble,n_observations, n_actions).to(device)
+    policy_net_T = GaussianMixtureMLP(args.NUM_ensemble,n_observations+1, n_observations).to(device)
+    target_net_T = GaussianMixtureMLP(args.NUM_ensemble,n_observations+1, n_observations).to(device)
+    target_net_T.load_state_dict(policy_net_T.state_dict())
+    actor_net = DQN(n_observations, n_actions).to(device)
+    optimizer = torch.optim.AdamW(actor_net.parameters(), lr=1e-4, amsgrad=True)
+  
 
 target_net.load_state_dict(policy_net.state_dict())
 # set the buffer
@@ -84,13 +94,24 @@ if __name__=="__main__":
                 action,E = select_action_FE(policy_net,state,args.PRINT)
             elif args.model=="model_1_AI":
                 action,E=select_action_1_AI_double_uncertainty(policy_net,policy_net_T,state,n_actions,args.PRINT)
+            elif args.model=="model_1_AI_actor":
+                out=actor_net(state).squeeze()
+                action=Categorical(torch.softmax(out,0)).sample().reshape(1,1)
+                if action.item()==torch.argmax(out):
+                    E=0
+                else:
+                    E=1
             # count the explore step number
             E_count+=E
             # step forward
             observation, reward, terminated, truncated, _ = env.step(action.item())
             
             reward = torch.tensor([reward], device=device)
-            done = terminated or truncated
+            if args.env=="MountainCar-v0":
+                done = terminated
+            else:
+                done = terminated or truncated
+
 
             if terminated:
                 next_state=None
@@ -112,6 +133,10 @@ if __name__=="__main__":
             elif args.model=="model_1_AI":
                 optimize_model_ensemble(buffer,policy_net,target_net,GAMMA=args.GAMMA,BATCH_SIZE=args.BATCH_SIZE,device=device)
                 optimize_model_ensemble(buffer,policy_net_T,target_net_T,GAMMA=args.GAMMA,BATCH_SIZE=args.BATCH_SIZE,device=device,T=True)
+            elif args.model=="model_1_AI_actor":
+                optimize_model_ensemble(buffer,policy_net,target_net,GAMMA=args.GAMMA,BATCH_SIZE=args.BATCH_SIZE,device=device)
+                optimize_model_ensemble(buffer,policy_net_T,target_net_T,GAMMA=args.GAMMA,BATCH_SIZE=args.BATCH_SIZE,device=device,T=True)
+                optimize_actor(buffer,policy_net,policy_net_T,actor_net,optimizer,GAMMA=args.GAMMA,BATCH_SIZE=args.BATCH_SIZE,device=device)
 
             # soft update th target network
             soft_update_model_weights(policy_net,target_net,args.TAU)
@@ -124,14 +149,14 @@ if __name__=="__main__":
                 ensemble=True
                 if args.model=="DQN":
                     ensemble=False
-                # getRM(policy_net,False,f"Q_table_best_action/best_action_{args.model}_{i_episode}_{args.file_identify}.png",ensemble)
+                # getRM(policy_net,False,f"Q_table_best_action/best_action_{args.model}_{i_episode}_{args.ID}.png",ensemble)
                 break
 
     print('Complete')
     plt.plot(cum_R)
+    plt.savefig(f"imgs/cumR_{args.model}_{i_episode}_{args.ID}.png")
     plt.show()
-    plt.savefig(f"imgs/cumR_{args.model}_{i_episode}_{args.file_identify}.png")
-    torch.save(policy_net.state_dict(),f"models_saved/{args.model}_{i_episode}_{args.file_identify}.pt")    
+    torch.save(policy_net.state_dict(),f"models_saved/{args.env}_{args.model}_{i_episode}_{args.ID}.pt")    
 
 
 
