@@ -13,7 +13,7 @@ from torch.distributions import Categorical
 
 parser = argparse.ArgumentParser(description='|model|env|')
 parser.add_argument("--model",default="model_1_AI",help="DQN|ensemble_DQN|model_1_AI|model_1_AI_actor")
-parser.add_argument("--env",default="CartPole-v1",help="CartPole-v1|MountainCar-v0|LunarLander-v2|Acrobot-v1|Pendulum-v1")
+parser.add_argument("--env",default="Acrobot-v1",help="CartPole-v1|MountainCar-v0|LunarLander-v2|Acrobot-v1|Pendulum-v1")
 parser.add_argument("--BATCH_SIZE",type=int,default=300)
 parser.add_argument("--NUM_episodes",type=int,default=3000)
 parser.add_argument("--GAMMA",default=0.99)
@@ -74,6 +74,7 @@ buffer = ReplayMemory(100000)
 steps_done=0
 if __name__=="__main__":
     cum_R=[]
+    steps_episode=[]
     for i_episode in range(args.NUM_episodes):
         # Initialize the environment and get it's state
         state, info = env.reset()
@@ -146,6 +147,7 @@ if __name__=="__main__":
                 print(msg)
                 logging.info(msg)
                 cum_R.append(t+1)
+                steps_episode.append(steps_done)
                 ensemble=True
                 if args.model=="DQN":
                     ensemble=False
@@ -154,8 +156,15 @@ if __name__=="__main__":
 
     print('Complete')
     plt.plot(cum_R)
-    plt.savefig(f"imgs/cumR_{args.model}_{i_episode}_{args.ID}.png")
+    plt.savefig(f"imgs/cumR_episode_{args.model}_{i_episode}_{args.ID}.png")
     plt.show()
+    plt.close()
+
+    plt.plot(steps_episode,cum_R)
+    plt.savefig(f"imgs/cumR_steps_{args.model}_{i_episode}_{args.ID}.png")
+    plt.show()
+    plt.close()
+
     torch.save(policy_net.state_dict(),f"models_saved/{args.env}_{args.model}_{i_episode}_{args.ID}.pt")    
 
 
