@@ -121,7 +121,7 @@ class GaussianMixtureMLP(nn.Module):
                 next_state_values = torch.zeros(int(batch_n/self.num_models))
                 next_state_values[non_final_mask.squeeze()] = target_model(non_final_next_states)[0].max(1)[0]
             
-            loss=F.gaussian_nll_loss(state_action_values,next_state_values+gamma*reward[i].squeeze(),state_action_values_var)
+            loss=F.gaussian_nll_loss(state_action_values,next_state_values*gamma+reward[i].squeeze(),state_action_values_var)
             # optimize
             loss.backward()
             torch.nn.utils.clip_grad_value_(model.parameters(), 100)

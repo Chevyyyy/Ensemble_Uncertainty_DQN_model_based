@@ -1,0 +1,4 @@
+DQN:
+CartPole: 70k(30k) -> 500 steps
+ensemble_DQN:
+CartPole: 100k -> 500 steps

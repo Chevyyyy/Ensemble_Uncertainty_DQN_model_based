@@ -9,6 +9,7 @@ class ReplayMemory(object):
 
     def __init__(self, capacity):
         self.memory = deque([], maxlen=capacity)
+        self.Transition=Transition
 
     def push(self, *args):
         """Save a transition"""
