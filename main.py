@@ -13,11 +13,12 @@ from torch.distributions import Categorical
 from agent.DQN_Agent import DQN 
 from agent.DQN_ensemble_Agent import DQN_ensemble 
 from agent.model_1_AI import model_1_AI 
+from agent.PPO_agent import PPO 
 from torch.utils.tensorboard import SummaryWriter
 writer = SummaryWriter()
 
 parser = argparse.ArgumentParser(description='|model|env|')
-parser.add_argument("--model",default="model_1_AI",help="DQN|PPO|ensemble_DQN|model_1_AI|model_1_AI_actor")
+parser.add_argument("--model",default="PPO",help="DQN|PPO|ensemble_DQN|model_1_AI|model_1_AI_actor")
 parser.add_argument("--env",default="CartPole-v1",help="CartPole-v1|MountainCar-v0|LunarLander-v2|Acrobot-v1|Pendulum-v1")
 parser.add_argument("--BATCH_SIZE",type=int,default=300)
 parser.add_argument("--NUM_episodes",type=int,default=3000000)
@@ -49,6 +50,8 @@ device = torch.device(args.device)
 # set the model
 if args.model=="DQN":
     agent = DQN(n_observations, n_actions,env)
+elif args.model=="PPO":
+    agent = PPO(n_observations, n_actions,env)
 elif args.model=="ensemble_DQN":
     agent = DQN_ensemble(args.NUM_ensemble,n_observations,n_actions)
 elif args.model=="model_1_AI":
@@ -81,7 +84,9 @@ if __name__=="__main__":
                     logging.info(f"foot: {state[0,0].item()} {state[0,1].item()}")
             # select action accroding to Free energy
             if args.model=="DQN":
-                action,E=agent.select_action(state)
+                action,E,action_prob = agent.select_action(state)
+            elif args.model=="PPO":
+                action,E,action_prob = agent.select_action(state)
             elif args.model=="ensemble_DQN":
                 action,E = agent.select_action(state)
             elif args.model=="model_1_AI":
@@ -98,20 +103,18 @@ if __name__=="__main__":
             # step forward
             observation, reward, terminated, truncated, _ = env.step(action.item())
             
-            reward = torch.tensor([reward], device=device)
+            reward = torch.tensor([reward])
+            terminated = torch.tensor([terminated],dtype=torch.float32)
+            action_prob = torch.tensor([action_prob],dtype=torch.float32)
             if args.env=="MountainCar-v0":
                 done = terminated
             else:
                 done = terminated or truncated
 
-
-            if terminated:
-                next_state=None
-            else:
-                next_state = torch.tensor(observation, dtype=torch.float32, device=device).unsqueeze(0)
+                next_state = torch.tensor(observation, dtype=torch.float32).unsqueeze(0)
 
             # Store the transition in memory
-            agent.buffer.push(state, action, next_state, reward)
+            agent.buffer.push(state, action,action_prob, next_state, reward,terminated)
 
             # Move to the next state
             state = next_state
@@ -119,6 +122,8 @@ if __name__=="__main__":
             # Perform one step of the optimization (on the policy network)
             # select action accroding to Free energy
             if args.model=="DQN":
+                agent.update() 
+            if args.model=="PPO":
                 agent.update() 
             elif args.model=="ensemble_DQN":
                 agent.update() 

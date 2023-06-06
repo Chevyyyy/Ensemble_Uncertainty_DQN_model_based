@@ -69,8 +69,8 @@ class PPO():
         self.training_step = 0
         self.writer = SummaryWriter()
 
-        self.actor_optimizer = optim.Adam(self.actor_net.parameters(), 1e-4)
-        self.critic_net_optimizer = optim.Adam(self.critic_net.parameters(), 1e-4)
+        self.actor_optimizer = optim.Adam(self.actor_net.parameters(), 3e-4)
+        self.critic_net_optimizer = optim.Adam(self.critic_net.parameters(), 1e-3)
         if not os.path.exists('../param'):
             os.makedirs('../param/net_param')
             os.makedirs('../param/img')
