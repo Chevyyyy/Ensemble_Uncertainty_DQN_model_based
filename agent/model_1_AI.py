@@ -68,7 +68,7 @@ class model_1_AI():
         E=0
         if action.item()-action1.item()!=0:
             E=1
-        return action,E
+        return action,E,1
             
     def update(self):
         if len(self.buffer) < self.BATCH_SIZE:
@@ -80,13 +80,15 @@ class model_1_AI():
         # (a final state would've been the one after which simulation ended)
 
         
+        next_states = torch.cat(batch.next_state)
         state_batch = torch.cat(batch.state)
         action_batch = torch.cat(batch.action)
         reward_batch = torch.cat(batch.reward)
-
+        dones = torch.cat(batch.terminated)
         
-        self.Ensemble_Q_net.optimize_replay(state_batch,batch.next_state,action_batch,reward_batch,self.GAMMA,self.Ensemble_Q_net_target)
-        self.Ensemble_T_net.optimize_replay_T(state_batch,batch.next_state,action_batch,reward_batch,self.GAMMA,self.Ensemble_T_net_target)
+
+        self.Ensemble_Q_net.optimize_replay(state_batch,next_states,action_batch,reward_batch,dones,self.GAMMA,self.Ensemble_Q_net_target)
+        self.Ensemble_T_net.optimize_replay_T(state_batch,next_states,action_batch)
 
         soft_update_model_weights(self.Ensemble_Q_net,self.Ensemble_Q_net_target,self.TAU) 
         soft_update_model_weights(self.Ensemble_T_net,self.Ensemble_T_net_target,self.TAU) 

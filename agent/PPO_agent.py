@@ -2,20 +2,17 @@ import torch
 from scipy.stats import norm
 from buffer import ReplayMemory
 import numpy as np
-from utilis import soft_update_model_weights
 from networks.MLP import MLP
 from torch.distributions import Normal, Categorical
 from torch import nn
-from torch.utils.tensorboard import SummaryWriter
-writer = SummaryWriter()
 
 class PPO():
-    def __init__(self,n_observations,n_actions,env):
+    def __init__(self,n_observations,n_actions,env,writer):
         self.actor_net=MLP(n_observations,n_actions)
         self.critic_net=MLP(n_observations,1)
         self.actor_optimizer=torch.optim.AdamW(self.actor_net.parameters(),lr=3e-4,amsgrad=True)
         self.critic_optimizer=torch.optim.AdamW(self.critic_net.parameters(),lr=1e-3,amsgrad=True)
-
+        self.writer=writer
         self.clip_param = 0.2
         self.max_grad_norm = 0.5
 

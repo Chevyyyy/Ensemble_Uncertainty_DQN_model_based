@@ -39,10 +39,10 @@ class DQN():
         action1=torch.tensor([[self.env.action_space.sample()]], dtype=torch.long)
 
         if sample > eps_threshold:
-                    return action0,0,None 
+                    return action0,0,1 
         else:
             E=(action0.item()!=action1.item())
-            return action1,E,None
+            return action1,E,1
             
     def update(self):
         if len(self.buffer) < self.BATCH_SIZE:

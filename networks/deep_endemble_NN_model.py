@@ -83,14 +83,16 @@ class GaussianMixtureMLP(nn.Module):
             loss.backward()
             optim.step()
 
-    def optimize_replay(self,current_state,next_state,action,reward,gamma,target_net):
+    def optimize_replay(self,current_state,next_state,action,reward,dones,gamma,target_net):
         batch_n=current_state.shape[0]
 
     
         
         current_state=current_state.reshape(self.num_models,int(batch_n/self.num_models),-1)
+        next_state=next_state.reshape(self.num_models,int(batch_n/self.num_models),-1)
         reward=reward.reshape(self.num_models,int(batch_n/self.num_models),-1)
         action=action.reshape(self.num_models,int(batch_n/self.num_models),-1)
+        dones=dones.reshape(self.num_models,int(batch_n/self.num_models),-1)
         
 
         
@@ -98,14 +100,6 @@ class GaussianMixtureMLP(nn.Module):
         self.train()
         for i in range(self.num_models):
 
-            next_state_i=next_state[int(i*batch_n/self.num_models):int((i+1)*batch_n/self.num_models)]
-
-            
-            non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,
-                                            next_state_i)), dtype=torch.bool)
-            non_final_next_states = torch.cat([s for s in next_state_i
-                                                    if s is not None])
-            
             model = getattr(self, 'model_' + str(i))
             optim = getattr(self, 'optim_' + str(i))
             target_model=getattr(target_net, 'model_' + str(i))
@@ -118,48 +112,37 @@ class GaussianMixtureMLP(nn.Module):
             state_action_values_var = var.gather(1, action[i]).squeeze()
 
             with torch.no_grad():
-                next_state_values = torch.zeros(int(batch_n/self.num_models))
-                next_state_values[non_final_mask.squeeze()] = target_model(non_final_next_states)[0].max(1)[0]
-            
-            loss=F.gaussian_nll_loss(state_action_values,next_state_values*gamma+reward[i].squeeze(),state_action_values_var)
+                next_state_values = target_model(next_state[i])[0].max(1)[0]
+            target=(1-dones[i].squeeze())*next_state_values*gamma+reward[i].squeeze() 
+            loss=F.gaussian_nll_loss(state_action_values,target,state_action_values_var)+state_action_values_var.mean()
             # optimize
             loss.backward()
             torch.nn.utils.clip_grad_value_(model.parameters(), 100)
             optim.step()
             
-    def optimize_replay_T(self,current_state,next_state,action,reward,gamma,target_net):
+    def optimize_replay_T(self,current_state,next_state,action):
         batch_n=current_state.shape[0]
 
     
         
         current_state=current_state.reshape(self.num_models,int(batch_n/self.num_models),-1)
-        reward=reward.reshape(self.num_models,int(batch_n/self.num_models),-1)
+        next_state=next_state.reshape(self.num_models,int(batch_n/self.num_models),-1)
         action=action.reshape(self.num_models,int(batch_n/self.num_models),-1)
         current_state_action=torch.cat([current_state,action],2) 
-
         
         
         self.train()
         for i in range(self.num_models):
 
-            next_state_i=next_state[int(i*batch_n/self.num_models):int((i+1)*batch_n/self.num_models)]
-
-            
-            non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,
-                                            next_state_i)), dtype=torch.bool)
-            non_final_next_states = torch.cat([s for s in next_state_i
-                                                    if s is not None])
-            
             
             model = getattr(self, 'model_' + str(i))
             optim = getattr(self, 'optim_' + str(i))
-            target_model=getattr(target_net, 'model_' + str(i))
             # forward
-            mean, var = model(current_state_action[i][non_final_mask])
+            mean, var = model(current_state_action[i])
             # compute the loss
             optim.zero_grad()
             
-            loss=F.gaussian_nll_loss(mean,non_final_next_states,var)
+            loss=F.gaussian_nll_loss(mean,next_state[i],var)
 
             # optimize
             loss.backward()

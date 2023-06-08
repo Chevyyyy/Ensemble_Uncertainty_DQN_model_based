@@ -1,0 +1,4 @@
+python main.py --ID night --model DQN
+python main.py --ID night --model PPO 
+python main.py --ID night --model ensemble_DQN 
+python main.py --ID night --model model_1_AI 
