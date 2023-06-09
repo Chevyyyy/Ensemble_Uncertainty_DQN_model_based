@@ -11,6 +11,8 @@ class DQN_ensemble():
         self.optimizer=torch.optim.AdamW(self.Ensemble_Q_net.parameters(),lr=1e-4,amsgrad=True)
         self.Ensemble_Q_net_target.load_state_dict(self.Ensemble_Q_net.state_dict())
         self.writer=writer
+        self.n_actions=n_actions
+        
 
         self.buffer=ReplayMemory(10000)
         self.steps_done=0
@@ -29,7 +31,9 @@ class DQN_ensemble():
         self.steps_done+=1
         R,var=self.Ensemble_Q_net(state)
         R=R.squeeze()
+        delta_max=abs(R[0]-R[1])
         var=var.squeeze()
+        var=torch.clamp(var,torch.tensor(0.01),delta_max**2)
         R=R.detach().tolist()
         p=[]
 
@@ -44,8 +48,13 @@ class DQN_ensemble():
 
         FE=-np.array(R)+np.array(p)
         nsoftFE=np.exp(-FE)/(np.exp(-FE).sum())
-        action=torch.tensor(np.argmax(np.random.multinomial(1,nsoftFE))).reshape(1,1)
-        action=torch.tensor(np.argmin(FE)).unsqueeze(0)
+        try:
+            action=torch.tensor(np.argmax(np.random.multinomial(1,nsoftFE))).reshape(1,1)
+        except:
+            print(nsoftFE)
+            action=torch.tensor(0).reshape(1,1)
+        
+        # action=torch.tensor(np.argmin(FE)).unsqueeze(0)
         self.writer.add_scalar("var of Q",var[0],self.steps_done)
         self.writer.add_scalar("var of Q1",var[1],self.steps_done)
         
@@ -66,12 +75,15 @@ class DQN_ensemble():
         self.steps_done+=1
         R,var=self.Ensemble_Q_net(state)
         R=R.squeeze()
+        delta_max=abs(R[0]-R[1])
         var=var.squeeze()
-        R_var=R+torch.tensor(np.random.normal(size=2))*(var**0.5)/2
+        std=torch.clamp(var**0.5,torch.tensor(0),delta_max)
+        R_var=R+torch.tensor(np.random.normal(size=self.n_actions))*std*3
         action=torch.argmax(R_var).reshape(1,1)
         action1=torch.argmax(R).reshape(1,1)
 
-        self.writer.add_scalar("var of Q",var[0],self.steps_done)
+        self.writer.add_scalar("std of Q",var[0]**0.5,self.steps_done)
+        self.writer.add_scalar("delta_max",delta_max,self.steps_done)
         
         E=0
         if action.item()-action1.item()!=0:

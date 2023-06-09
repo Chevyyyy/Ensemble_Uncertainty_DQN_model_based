@@ -20,7 +20,7 @@ parser = argparse.ArgumentParser(description='|model|env|')
 parser.add_argument("--model",default="ensemble_DQN",help="DQN|PPO|ensemble_DQN|model_1_AI|model_1_AI_actor")
 parser.add_argument("--env",default="CartPole-v1",help="CartPole-v1|MountainCar-v0|LunarLander-v2|Acrobot-v1|Pendulum-v1")
 parser.add_argument("--BATCH_SIZE",type=int,default=300)
-parser.add_argument("--NUM_episodes",type=int,default=2000)
+parser.add_argument("--NUM_episodes",type=int,default=20000)
 parser.add_argument("--GAMMA",default=0.99)
 parser.add_argument("--TAU",default=0.005)
 parser.add_argument("--PRINT",default=False)
@@ -29,14 +29,14 @@ parser.add_argument("--device",default="cpu")
 parser.add_argument("--NUM_ensemble",default=5)
 parser.add_argument("--ID",default="0")
 parser.add_argument("--foot_record",default=False)
-parser.add_argument("--max_steps",type=int,default=10e5)
+parser.add_argument("--max_steps",type=int,default=2e5)
 args = parser.parse_args()
 
 ###############################################################################################
 # config the args
 # set the log file
 set_log_file(f"log/{args.model}_{args.env}_{args.ID}.txt")
-writer = SummaryWriter(f"runs/{args.model}_{args.env}_{args.ID}")
+writer = SummaryWriter(f"runs/{args.env}/{args.model}_{args.env}_{args.ID}")
 # set env
 env = gym.make(args.env,render_mode=args.render_mode)
 # Get number of actions from gym action space
@@ -67,6 +67,7 @@ if __name__=="__main__":
         state, info = env.reset()
         state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
         E_count=0
+        cum_R_float=0
         if steps_done>args.max_steps:
             break
         for t in count():
@@ -80,16 +81,15 @@ if __name__=="__main__":
             E_count+=E
             # step forward
             observation, reward, terminated, truncated, _ = env.step(action.item())
+            cum_R_float+=reward
             
             reward = torch.tensor([reward])
             terminated = torch.tensor([terminated],dtype=torch.float32)
             action_prob = torch.tensor([action_prob],dtype=torch.float32)
-            if args.env=="MountainCar-v0":
-                done = terminated
-            else:
-                done = terminated or truncated
 
-                next_state = torch.tensor(observation, dtype=torch.float32).unsqueeze(0)
+            done = terminated or truncated
+
+            next_state = torch.tensor(observation, dtype=torch.float32).unsqueeze(0)
 
             # Store the transition in memory
             agent.buffer.push(state, action,action_prob, next_state, reward,terminated)
@@ -106,7 +106,8 @@ if __name__=="__main__":
                 logging.info(msg)
                 cum_R.append(t+1)
                 steps_episode.append(steps_done)
-                writer.add_scalar("cum R of episode",t+1,i_episode)
+                writer.add_scalar("cum R of episode",cum_R_float,i_episode)
+                writer.add_scalar("cum R of steps",cum_R_float,steps_done)
                 writer.add_scalar("E rate",E_count/(t+1),i_episode)
                 break
 
