@@ -69,7 +69,7 @@ class DQN_ensemble():
             
         return action,E,nsoftFE[action] 
     
-    def select_action(self,state,eval=False,xxx=False):
+    def select_action(self,state,eval=False):
         """select action give a state
 
         Args:
@@ -91,15 +91,13 @@ class DQN_ensemble():
         if eval:
             return action1,0,1
 
-        self.writer.add_scalar("std of Q",var[0]**0.5,self.steps_done)
-        self.writer.add_scalar("delta_max",delta_max,self.steps_done)
-        self.writer.add_scalar("delta_max/std",delta_max/std[0],self.steps_done)
+        self.writer.add_scalar("action/std of Q",var[0]**0.5,self.steps_done)
+        self.writer.add_scalar("action/delta_max",delta_max,self.steps_done)
+        self.writer.add_scalar("action/delta_max_std_ratio",delta_max/std[0],self.steps_done)
         
         E=0
         if action.item()-action1.item()!=0:
             E=1
-        if xxx:
-            return action1,0,1
         return action,E,1
     
     

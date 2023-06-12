@@ -65,7 +65,6 @@ elif args.model=="SAC":
 ##########################################################################################################
 
 steps_done=0
-xxx=0
 if __name__=="__main__":
     cum_R=[]
     steps_episode=[]
@@ -83,7 +82,7 @@ if __name__=="__main__":
                 if steps_done<20000:
                     logging.info(f"foot: {state[0,0].item()} {state[0,1].item()}")
             # select action accroding to Free energy
-            action,E,action_prob = agent.select_action(state,xxx=xxx)
+            action,E,action_prob = agent.select_action(state)
             # count the explore step number
             E_count+=E
             # step forward
@@ -110,8 +109,6 @@ if __name__=="__main__":
             if done:
                 if i_episode%args.eval_intervel==0:
                     eva_cum_R=evaluate(env,agent,repeat_average=args.repeat_average)
-                    if eva_cum_R==500:
-                        xx=True
                     print(f"{i_episode}, evaluate cum R: {eva_cum_R}, Total_steps: {steps_done}")
                 msg=f" {i_episode}, step: {t+1}, E: {E_count/(t+1)}, Total_steps: {steps_done}"
                 # print(msg)
