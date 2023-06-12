@@ -346,3 +346,30 @@ def optimize_model(buffer,policy_net,optimizer,target_net,GAMMA=0.99,BATCH_SIZE=
     # In-place gradient clipping
     torch.nn.utils.clip_grad_value_(policy_net.parameters(), 100)
     optimizer.step()
+
+    
+    
+    
+def evaluate(env,agent,repeat_average):
+     
+    
+    
+    cum_R=0 
+    for _ in range(repeat_average):
+
+        state, info = env.reset()
+        done=False
+        while not done:
+            
+            action,E,action_prob=agent.select_action(torch.tensor([state]),eval=True)
+            state, reward, terminated, truncated, _ = env.step(action.item())
+
+
+            
+            cum_R+=reward
+            
+            
+            done= terminated or truncated
+    
+    
+    return cum_R/repeat_average 

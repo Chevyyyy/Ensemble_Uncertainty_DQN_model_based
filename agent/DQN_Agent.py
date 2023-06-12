@@ -20,7 +20,7 @@ class DQN():
         self.GAMMA = 0.99 
         self.TAU=0.005
 
-    def select_action(self,state):
+    def select_action(self,state,eval=False):
         """select action give a state
 
         Args:
@@ -33,12 +33,13 @@ class DQN():
         sample = random.random()
         eps_threshold = self.EPS_END + (self.EPS_START - self.EPS_END) * \
             math.exp(-1. * self.steps_done / self.EPS_DECAY)
-        self.steps_done += 1
+        if eval==False:
+            self.steps_done += 1
 
         action0=self.Q_net(state).max(1)[1].view(1, 1)
         action1=torch.tensor([[self.env.action_space.sample()]], dtype=torch.long)
 
-        if sample > eps_threshold:
+        if sample > eps_threshold or eval:
                     return action0,0,1 
         else:
             E=(action0.item()!=action1.item())

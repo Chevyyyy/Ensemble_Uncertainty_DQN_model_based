@@ -14,10 +14,11 @@ from agent.DQN_Agent import DQN
 from agent.DQN_ensemble_Agent import DQN_ensemble 
 from agent.model_1_AI import model_1_AI 
 from agent.PPO_agent import PPO 
+from agent.SAC_Agent import SAC
 from torch.utils.tensorboard import SummaryWriter
 
 parser = argparse.ArgumentParser(description='|model|env|')
-parser.add_argument("--model",default="ensemble_DQN",help="DQN|PPO|ensemble_DQN|model_1_AI|model_1_AI_actor")
+parser.add_argument("--model",default="ensemble_DQN",help="SAC|DQN|PPO|ensemble_DQN|model_1_AI|model_1_AI_actor")
 parser.add_argument("--env",default="CartPole-v1",help="CartPole-v1|MountainCar-v0|LunarLander-v2|Acrobot-v1|Pendulum-v1")
 parser.add_argument("--BATCH_SIZE",type=int,default=300)
 parser.add_argument("--NUM_episodes",type=int,default=20000)
@@ -29,7 +30,10 @@ parser.add_argument("--device",default="cpu")
 parser.add_argument("--NUM_ensemble",default=5)
 parser.add_argument("--ID",default="0")
 parser.add_argument("--foot_record",default=False)
-parser.add_argument("--max_steps",type=int,default=2e5)
+parser.add_argument("--max_steps",type=int,default=1e5)
+parser.add_argument("--repeat_average",type=int,default=10)
+parser.add_argument("--eval_intervel",type=int,default=10)
+parser.add_argument("--e",type=int,default=0)
 args = parser.parse_args()
 
 ###############################################################################################
@@ -56,9 +60,12 @@ elif args.model=="ensemble_DQN":
     agent = DQN_ensemble(args.NUM_ensemble,n_observations,n_actions,writer)
 elif args.model=="model_1_AI":
     agent = model_1_AI(args.NUM_ensemble,n_observations,n_actions)
+elif args.model=="SAC":
+    agent = SAC(n_observations,n_actions)
 ##########################################################################################################
 
 steps_done=0
+xxx=0
 if __name__=="__main__":
     cum_R=[]
     steps_episode=[]
@@ -76,7 +83,7 @@ if __name__=="__main__":
                 if steps_done<20000:
                     logging.info(f"foot: {state[0,0].item()} {state[0,1].item()}")
             # select action accroding to Free energy
-            action,E,action_prob = agent.select_action(state)
+            action,E,action_prob = agent.select_action(state,xxx=xxx)
             # count the explore step number
             E_count+=E
             # step forward
@@ -101,12 +108,19 @@ if __name__=="__main__":
             agent.update() 
 
             if done:
+                if i_episode%args.eval_intervel==0:
+                    eva_cum_R=evaluate(env,agent,repeat_average=args.repeat_average)
+                    if eva_cum_R==500:
+                        xx=True
+                    print(f"{i_episode}, evaluate cum R: {eva_cum_R}, Total_steps: {steps_done}")
                 msg=f" {i_episode}, step: {t+1}, E: {E_count/(t+1)}, Total_steps: {steps_done}"
-                print(msg)
+                # print(msg)
                 logging.info(msg)
                 cum_R.append(t+1)
                 steps_episode.append(steps_done)
                 writer.add_scalar("cum R of episode",cum_R_float,i_episode)
+                writer.add_scalar("eva cum R of steps",eva_cum_R,steps_done)
+                writer.add_scalar("eva cum R of episode",eva_cum_R,i_episode)
                 writer.add_scalar("cum R of steps",cum_R_float,steps_done)
                 writer.add_scalar("E rate",E_count/(t+1),i_episode)
                 break

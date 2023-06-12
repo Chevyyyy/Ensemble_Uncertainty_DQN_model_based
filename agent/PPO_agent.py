@@ -23,7 +23,7 @@ class PPO():
         self.GAMMA = 0.99 
         self.env=env
 
-    def select_action(self,state):
+    def select_action(self,state,eval=False):
         """select action give a state
 
         Args:
@@ -42,6 +42,8 @@ class PPO():
             E=0
             
 
+        if eval:
+            return action_max,0,1
         return torch.tensor(action).unsqueeze(0),E, action_prob[:,action.item()].item()
             
     def update(self):

@@ -51,7 +51,7 @@ class GaussianMixtureMLP(nn.Module):
             optim=torch.optim.AdamW(getattr(self, 'model_' + str(i)).parameters(),lr=0.0001)
             setattr(self,"optim_"+str(i),optim)
             
-    def forward(self, x):
+    def forward(self, x,value_net=None):
         self.eval()
         # connect layers
         means = []
@@ -64,8 +64,11 @@ class GaussianMixtureMLP(nn.Module):
         means = torch.stack(means)
         mean = means.mean(dim=0)
         variances = torch.stack(variances)
-        # variance = (variances + means.pow(2)).mean(dim=0) - mean.pow(2)
-        variance = (means-means.mean(2).unsqueeze(-1)).var(0)
+        variance = (variances + means.pow(2)).mean(dim=0) - mean.pow(2)
+        if value_net is not None:
+            variance = (means-value_net(x)).var(0)
+        else:
+            variance = (means-means.mean(2).unsqueeze(-1)).var(0)
         variance=F.relu(variance)+1e-6
         return mean, variance
     
@@ -100,7 +103,6 @@ class GaussianMixtureMLP(nn.Module):
         
         self.train()
         for i in range(self.num_models):
-
             model = getattr(self, 'model_' + str(i))
             optim = getattr(self, 'optim_' + str(i))
             target_model=getattr(target_net, 'model_' + str(i))
@@ -136,7 +138,6 @@ class GaussianMixtureMLP(nn.Module):
         
         self.train()
         for i in range(self.num_models):
-
             
             model = getattr(self, 'model_' + str(i))
             optim = getattr(self, 'optim_' + str(i))

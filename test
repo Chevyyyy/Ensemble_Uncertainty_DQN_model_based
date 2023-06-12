@@ -1,0 +1,11 @@
+python main.py --ID eva1 --model ensemble_DQN --env CartPole-v1
+python main.py --ID eva2 --model ensemble_DQN --env CartPole-v1
+python main.py --ID eva3 --model ensemble_DQN --env CartPole-v1
+
+
+python main.py --ID eva1 --model DQN --env Acrobot-v1
+python main.py --ID eva2 --model DQN --env Acrobot-v1
+python main.py --ID eva3 --model DQN --env Acrobot-v1
+python main.py --ID eva1 --model ensemble_DQN --env Acrobot-v1
+python main.py --ID eva2 --model ensemble_DQN --env Acrobot-v1
+python main.py --ID eva3 --model ensemble_DQN --env Acrobot-v1
