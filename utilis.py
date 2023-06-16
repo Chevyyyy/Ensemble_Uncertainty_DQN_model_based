@@ -361,7 +361,7 @@ def evaluate(env,agent,repeat_average):
         done=False
         while not done:
             
-            action,E,action_prob=agent.select_action(torch.tensor([state]),eval=True)
+            action,E,action_prob=agent.select_action(torch.tensor(np.array([state])),eval=True)
             state, reward, terminated, truncated, _ = env.step(action.item())
 
 
