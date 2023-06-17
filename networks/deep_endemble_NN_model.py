@@ -65,13 +65,13 @@ class GaussianMixtureMLP(nn.Module):
         mean = means.mean(dim=0)
         variances = torch.stack(variances)
         variance = (variances + means.pow(2)).mean(dim=0) - mean.pow(2)
-        variance = (variances + (means-means.max(2)[0].unsqueeze(-1)).pow(2)).mean(dim=0)
-        variance = (means-means.max(2)[0].unsqueeze(-1)).var(dim=0)
+        # variance = (variances + (means-means.max(2)[0].unsqueeze(-1)).pow(2)).mean(dim=0)
+        # variance = (means-means.max(2)[0].unsqueeze(-1)).var(dim=0)
         # if value_net is not None:
         #     variance = (means-value_net(x)).var(0)
         # else:
         #     variance = (means-means.mean(2).unsqueeze(-1)).var(0)
-        variance=F.relu(variance)+1e-6
+        # variance=F.relu(variance)+1e-6
         return mean, variance
     
     def optimize(self,x_M,t_M):
@@ -117,11 +117,13 @@ class GaussianMixtureMLP(nn.Module):
             state_action_values_var = var.gather(1, action[i]).squeeze()
 
             with torch.no_grad():
-                mean_target=target_net(next_state[i])[0]
-                next_state_values = mean_target.max(1)[0]
-            target=(1-dones[i].squeeze())*next_state_values*gamma+reward[i].squeeze() 
-            loss=F.gaussian_nll_loss(state_action_values,target,state_action_values_var)
-            loss=((target-state_action_values)**2).mean()
+                mean_next,next_state_var=target_model(next_state[i])
+                next_state_values,action_index = mean_next.max(1)
+            value_target=(1-dones[i].squeeze())*next_state_values*gamma+reward[i].squeeze() 
+            var_target=(1-dones[i].squeeze())*next_state_var.gather(1,action_index.unsqueeze(-1)).squeeze()*gamma 
+            # loss=F.gaussian_nll_loss(state_action_values,target,state_action_values_var)
+            # uncertainty propagation
+            loss=((value_target-state_action_values)**2).mean()+((gamma*var_target**0.5-state_action_values_var**0.5)**2).mean()
             # optimize
             loss.backward()
             torch.nn.utils.clip_grad_value_(model.parameters(), 100)
