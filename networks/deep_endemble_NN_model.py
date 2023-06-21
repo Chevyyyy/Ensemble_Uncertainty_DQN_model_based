@@ -72,7 +72,7 @@ class GaussianMixtureMLP(nn.Module):
         # else:
         #     variance = (means-means.mean(2).unsqueeze(-1)).var(0)
         # variance=F.relu(variance)+1e-6
-        return mean, variance
+        return means, variance
     
     def optimize(self,x_M,t_M):
         self.train()
@@ -117,13 +117,15 @@ class GaussianMixtureMLP(nn.Module):
             state_action_values_var = var.gather(1, action[i]).squeeze()
 
             with torch.no_grad():
-                mean_next,next_state_var=target_model(next_state[i])
+                mean_next,next_state_var=target_net(next_state[i])
+                mean_next=mean_next.mean(0)
                 next_state_values,action_index = mean_next.max(1)
             value_target=(1-dones[i].squeeze())*next_state_values*gamma+reward[i].squeeze() 
             var_target=(1-dones[i].squeeze())*next_state_var.gather(1,action_index.unsqueeze(-1)).squeeze()*gamma 
             # loss=F.gaussian_nll_loss(state_action_values,target,state_action_values_var)
             # uncertainty propagation
             loss=((value_target-state_action_values)**2).mean()+((gamma*var_target**0.5-state_action_values_var**0.5)**2).mean()
+            loss=((value_target-state_action_values)**2).mean()
             # optimize
             loss.backward()
             torch.nn.utils.clip_grad_value_(model.parameters(), 100)

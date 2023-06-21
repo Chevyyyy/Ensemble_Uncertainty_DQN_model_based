@@ -19,7 +19,7 @@ class DQN_ensemble():
         self.n_actions=n_actions
         
 
-        self.buffer=ReplayMemory(100000)
+        self.buffer=ReplayMemory(10000)
         self.steps_done=0
         self.BATCH_SIZE = 300
         self.GAMMA = 0.99 
@@ -99,7 +99,23 @@ class DQN_ensemble():
         if action.item()-action1.item()!=0:
             E=1
         return action,E,1
-    
+
+    def select_action(self,state,eval=False):
+        """select action give a state
+
+        Args:
+            state (tensor): current state 
+        Returns:
+            tensor,bool: action,exploration or not
+        """
+        if eval==False:
+            self.steps_done+=1
+        R,var=self.Ensemble_Q_net(state)
+        R=R.squeeze()
+        R=R[torch.randint(0,5,(1,))].squeeze()
+        self.writer.add_scalar("action/std of Q",var[0,0]**0.5,self.steps_done)
+        
+        return torch.argmax(R).reshape(1,1),0,1    
     
     def update(self):
         if len(self.buffer) < self.BATCH_SIZE:

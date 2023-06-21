@@ -1,0 +1,13 @@
+18:28:14,114  0, step: 16, E: 0.0, Total_steps: 16
+18:28:14,408  1, step: 13, E: 0.0, Total_steps: 29
+18:28:14,946  2, step: 24, E: 0.0, Total_steps: 53
+18:28:15,826  3, step: 39, E: 0.0, Total_steps: 92
+18:28:16,74  4, step: 11, E: 0.0, Total_steps: 103
+18:28:17,790  5, step: 11, E: 0.0, Total_steps: 114
+18:28:18,539  6, step: 26, E: 0.0, Total_steps: 140
+18:28:19,577  7, step: 39, E: 0.0, Total_steps: 179
+18:28:20,151  8, step: 24, E: 0.0, Total_steps: 203
+18:28:21,312  9, step: 47, E: 0.0, Total_steps: 250
+18:28:24,20  10, step: 13, E: 0.0, Total_steps: 263
+18:28:24,709  11, step: 14, E: 0.0, Total_steps: 277
+18:28:25,251  12, step: 11, E: 0.0, Total_steps: 288
