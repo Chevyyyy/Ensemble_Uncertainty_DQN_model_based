@@ -6,15 +6,15 @@ from utilis import soft_update_model_weights
 from networks.deep_endemble_NN_model import GaussianMixtureMLP
 from networks.MLP import MLP 
 class DQN_ensemble():
-    def __init__(self,n_model,n_observations,n_actions,writer):
-        self.Ensemble_Q_net=GaussianMixtureMLP(n_model,n_observations,n_actions)
-        self.Ensemble_Q_net_target=GaussianMixtureMLP(n_model,n_observations,n_actions)
-        self.value=MLP(n_observations,1)
-        self.target_value=MLP(n_observations,1)
+    def __init__(self,n_model,n_observations,n_actions,writer,CNN_flag=False):
+        self.Ensemble_Q_net=GaussianMixtureMLP(n_model,n_observations,n_actions,CNN_flag)
+        self.Ensemble_Q_net_target=GaussianMixtureMLP(n_model,n_observations,n_actions,CNN_flag)
+        # self.value=MLP(n_observations,1)
+        # self.target_value=MLP(n_observations,1)
         self.optimizer=torch.optim.AdamW(self.Ensemble_Q_net.parameters(),lr=1e-4,amsgrad=True)
-        self.optimizer_value=torch.optim.AdamW(self.value.parameters(),lr=1e-4,amsgrad=True)
+        # self.optimizer_value=torch.optim.AdamW(self.value.parameters(),lr=1e-4,amsgrad=True)
         self.Ensemble_Q_net_target.load_state_dict(self.Ensemble_Q_net.state_dict())
-        self.target_value.load_state_dict(self.value.state_dict())
+        # self.target_value.load_state_dict(self.value.state_dict())
         self.writer=writer
         self.n_actions=n_actions
         
@@ -112,10 +112,16 @@ class DQN_ensemble():
             self.steps_done+=1
         R,var=self.Ensemble_Q_net(state)
         R=R.squeeze()
-        R=R[torch.randint(0,5,(1,))].squeeze()
+        R_sample=R[torch.randint(0,5,(1,))].squeeze()
+
+        action=torch.argmax(R_sample).reshape(1,1)
+        action1=torch.argmax(R.mean(0)).reshape(1,1)
         self.writer.add_scalar("action/std of Q",var[0,0]**0.5,self.steps_done)
-        
-        return torch.argmax(R).reshape(1,1),0,1    
+
+        E=0
+        if action.item()-action1.item()!=0:
+            E=1
+        return action,E,1
     
     def update(self):
         if len(self.buffer) < self.BATCH_SIZE:

@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
+from networks.CNN import CNN
 
 
 class GaussianMultiLayerPerceptron(nn.Module):
@@ -30,6 +31,23 @@ class GaussianMultiLayerPerceptron(nn.Module):
         variance = F.softplus(variance) +1e-6  #Positive constraint
         return mean, variance
     
+    
+class GaussianMultiLayerCNN(nn.Module):
+    
+    def __init__(self, input_dim, output_dim):
+        super().__init__()
+        self.CNN = CNN(input_dim,output_dim)
+        
+    def forward(self, x):
+        batch_n=x.shape[0]
+        x = self.CNN(x).reshape(batch_n,2,-1)
+        mean=x[:,0,:]
+        variance=x[:,1,:]
+        variance = F.softplus(variance) +1e-6  #Positive constraint
+        return mean, variance
+    
+    
+        
 class GaussianMixtureMLP(nn.Module):
     """ Gaussian mixture MLP which outputs are mean and variance.
 
@@ -40,13 +58,16 @@ class GaussianMixtureMLP(nn.Module):
         hidden_layers (list of ints): hidden layer sizes
 
     """
-    def __init__(self, num_models=5, inputs=1, outputs=1):
+    def __init__(self, num_models=5, inputs=1, outputs=1,CNN_flag=False):
         super(GaussianMixtureMLP, self).__init__()
         self.num_models = num_models
         self.inputs = inputs
         self.outputs = outputs
         for i in range(self.num_models):
-            model = GaussianMultiLayerPerceptron(self.inputs,self.outputs*2)
+            if CNN_flag:
+                model = GaussianMultiLayerCNN(self.inputs,self.outputs*2)
+            else:
+                model = GaussianMultiLayerPerceptron(self.inputs,self.outputs*2)
             setattr(self, 'model_'+str(i), model)
             optim=torch.optim.AdamW(getattr(self, 'model_' + str(i)).parameters(),lr=0.0001)
             setattr(self,"optim_"+str(i),optim)
@@ -90,38 +111,33 @@ class GaussianMixtureMLP(nn.Module):
             optim.step()
 
     def optimize_replay(self,current_state,next_state,action,reward,dones,gamma,target_net):
-        batch_n=current_state.shape[0]
+        batch_n_per_model=current_state.shape[0]/self.num_models
 
     
-        
-        current_state=current_state.reshape(self.num_models,int(batch_n/self.num_models),-1)
-        next_state=next_state.reshape(self.num_models,int(batch_n/self.num_models),-1)
-        reward=reward.reshape(self.num_models,int(batch_n/self.num_models),-1)
-        action=action.reshape(self.num_models,int(batch_n/self.num_models),-1)
-        dones=dones.reshape(self.num_models,int(batch_n/self.num_models),-1)
-        
 
         
         
         self.train()
         for i in range(self.num_models):
+            index=torch.arange(batch_n_per_model)+i*batch_n_per_model
+            index=index.int()
             model = getattr(self, 'model_' + str(i))
             optim = getattr(self, 'optim_' + str(i))
             target_model=getattr(target_net, 'model_' + str(i))
             # forward
-            mean, var = model(current_state[i])
+            mean, var = model(current_state[index])
             # compute the loss
             optim.zero_grad()
 
-            state_action_values = mean.gather(1, action[i]).squeeze()
-            state_action_values_var = var.gather(1, action[i]).squeeze()
+            state_action_values = mean.gather(1, action[index]).squeeze()
+            state_action_values_var = var.gather(1, action[index]).squeeze()
 
             with torch.no_grad():
-                mean_next,next_state_var=target_net(next_state[i])
+                mean_next,next_state_var=target_net(next_state[index])
                 mean_next=mean_next.mean(0)
                 next_state_values,action_index = mean_next.max(1)
-            value_target=(1-dones[i].squeeze())*next_state_values*gamma+reward[i].squeeze() 
-            var_target=(1-dones[i].squeeze())*next_state_var.gather(1,action_index.unsqueeze(-1)).squeeze()*gamma 
+            value_target=(1-dones[index].squeeze())*next_state_values*gamma+reward[i].squeeze() 
+            var_target=(1-dones[index].squeeze())*next_state_var.gather(1,action_index.unsqueeze(-1)).squeeze()*gamma 
             # loss=F.gaussian_nll_loss(state_action_values,target,state_action_values_var)
             # uncertainty propagation
             loss=((value_target-state_action_values)**2).mean()+((gamma*var_target**0.5-state_action_values_var**0.5)**2).mean()

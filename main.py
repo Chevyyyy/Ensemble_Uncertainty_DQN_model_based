@@ -19,7 +19,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 parser = argparse.ArgumentParser(description='|model|env|')
 parser.add_argument("--model",default="ensemble_DQN",help="SAC|DQN|PPO|ensemble_DQN|model_1_AI|model_1_AI_actor")
-parser.add_argument("--env",default="CartPole-v1",help="CartPole-v1|MountainCar-v0|LunarLander-v2|Acrobot-v1|Pendulum-v1")
+parser.add_argument("--env",default="MinAtar/Breakout-v1",help="CartPole-v1|MountainCar-v0|LunarLander-v2|Acrobot-v1|Pendulum-v1|ALE/Breakout-v5|ALE/MontezumaRevenge-v5|MinAtar/Breakout-v1")
 parser.add_argument("--BATCH_SIZE",type=int,default=300)
 parser.add_argument("--NUM_episodes",type=int,default=20000)
 parser.add_argument("--GAMMA",default=0.99)
@@ -33,35 +33,41 @@ parser.add_argument("--foot_record",default=False)
 parser.add_argument("--max_steps",type=int,default=1e5)
 parser.add_argument("--repeat_average",type=int,default=3)
 parser.add_argument("--eval_intervel",type=int,default=5)
-parser.add_argument("--e",type=int,default=0)
+parser.add_argument("--eval",type=bool,default=False)
 args = parser.parse_args()
+if args.env.find("/"):
+    args.CNN=True
+else:
+    args.CNN=False
+envstr=args.env.split("/")[-1]
+
 
 ###############################################################################################
 # config the args
 # set the log file
-set_log_file(f"log/{args.model}_{args.env}_{args.ID}.txt")
-writer = SummaryWriter(f"runs/{args.env}/{args.model}_{args.env}_{args.ID}")
+set_log_file(f"log/{args.model}_{envstr}_{args.ID}.txt")
+writer = SummaryWriter(f"runs/{envstr}/{args.model}_{envstr}_{args.ID}")
 # set env
 env = gym.make(args.env,render_mode=args.render_mode)
 # Get number of actions from gym action space
 n_actions = env.action_space.n
 # Get the number of state observations
 state, info = env.reset()
-n_observations = len(state)
+state_shape = state.shape
 # set device
 device = torch.device(args.device)
 
 # set the model
 if args.model=="DQN":
-    agent = DQN(n_observations, n_actions,env)
+    agent = DQN(state_shape, n_actions,env,args.CNN)
 elif args.model=="PPO":
-    agent = PPO(n_observations, n_actions,env,writer)
+    agent = PPO(state_shape, n_actions,env,writer)
 elif args.model=="ensemble_DQN":
-    agent = DQN_ensemble(args.NUM_ensemble,n_observations,n_actions,writer)
+    agent = DQN_ensemble(args.NUM_ensemble,state_shape,n_actions,writer,args.CNN)
 elif args.model=="model_1_AI":
-    agent = model_1_AI(args.NUM_ensemble,n_observations,n_actions)
+    agent = model_1_AI(args.NUM_ensemble,state_shape,n_actions)
 elif args.model=="SAC":
-    agent = SAC(n_observations,n_actions)
+    agent = SAC(state_shape,n_actions)
 ##########################################################################################################
 
 steps_done=0
@@ -107,17 +113,17 @@ if __name__=="__main__":
             agent.update() 
 
             if done:
-                if i_episode%args.eval_intervel==0:
+                if i_episode%args.eval_intervel and args.eval:
                     eva_cum_R=evaluate(env,agent,repeat_average=args.repeat_average)
                     print(f"{i_episode}, evaluate cum R: {eva_cum_R}, Total_steps: {steps_done}")
-                msg=f" {i_episode}, step: {t+1}, E: {E_count/(t+1)}, Total_steps: {steps_done}"
-                # print(msg)
+                    writer.add_scalar("eva cum R of steps",eva_cum_R,steps_done)
+                    writer.add_scalar("eva cum R of episode",eva_cum_R,i_episode)
+                msg=f" {i_episode}  R: {cum_R_float} step: {t+1}  E: {E_count/(t+1)}  Total_steps: {steps_done}"
+                print(msg)
                 logging.info(msg)
                 cum_R.append(t+1)
                 steps_episode.append(steps_done)
                 writer.add_scalar("cum R of episode",cum_R_float,i_episode)
-                writer.add_scalar("eva cum R of steps",eva_cum_R,steps_done)
-                writer.add_scalar("eva cum R of episode",eva_cum_R,i_episode)
                 writer.add_scalar("cum R of steps",cum_R_float,steps_done)
                 writer.add_scalar("E rate",E_count/(t+1),i_episode)
                 break
