@@ -67,10 +67,11 @@ class GaussianMixtureMLP(nn.Module):
             if CNN_flag:
                 model = GaussianMultiLayerCNN(self.inputs,self.outputs*2)
             else:
-                model = GaussianMultiLayerPerceptron(self.inputs,self.outputs*2)
+                model = GaussianMultiLayerPerceptron(self.inputs[0],self.outputs*2)
             setattr(self, 'model_'+str(i), model)
             optim=torch.optim.AdamW(getattr(self, 'model_' + str(i)).parameters(),lr=0.0001)
             setattr(self,"optim_"+str(i),optim)
+        self.optim_all=torch.optim.AdamW(self.parameters(),lr=0.0001)
             
     def forward(self, x,value_net=None):
         self.eval()
@@ -110,17 +111,13 @@ class GaussianMixtureMLP(nn.Module):
             loss.backward()
             optim.step()
 
-    def optimize_replay(self,current_state,next_state,action,reward,dones,gamma,target_net):
-        batch_n_per_model=current_state.shape[0]/self.num_models
+    def optimize_replay(self,current_state,next_state,action,reward,dones,masks,gamma,target_net,batch_size):
 
-    
 
-        
-        
         self.train()
+        loss_all=0
         for i in range(self.num_models):
-            index=torch.arange(batch_n_per_model)+i*batch_n_per_model
-            index=index.int()
+            index=masks[:,i].bool()[:batch_size]
             model = getattr(self, 'model_' + str(i))
             optim = getattr(self, 'optim_' + str(i))
             target_model=getattr(target_net, 'model_' + str(i))
@@ -130,22 +127,18 @@ class GaussianMixtureMLP(nn.Module):
             optim.zero_grad()
 
             state_action_values = mean.gather(1, action[index]).squeeze()
-            state_action_values_var = var.gather(1, action[index]).squeeze()
 
             with torch.no_grad():
-                mean_next,next_state_var=target_net(next_state[index])
-                mean_next=mean_next.mean(0)
+                mean_next,next_state_var=target_model(next_state[index])
                 next_state_values,action_index = mean_next.max(1)
-            value_target=(1-dones[index].squeeze())*next_state_values*gamma+reward[i].squeeze() 
-            var_target=(1-dones[index].squeeze())*next_state_var.gather(1,action_index.unsqueeze(-1)).squeeze()*gamma 
-            # loss=F.gaussian_nll_loss(state_action_values,target,state_action_values_var)
-            # uncertainty propagation
-            loss=((value_target-state_action_values)**2).mean()+((gamma*var_target**0.5-state_action_values_var**0.5)**2).mean()
-            loss=((value_target-state_action_values)**2).mean()
-            # optimize
-            loss.backward()
-            torch.nn.utils.clip_grad_value_(model.parameters(), 100)
-            optim.step()
+                value_target=(1-dones[index].squeeze())*next_state_values*gamma+reward[i].squeeze() 
+
+            loss_all+=((value_target-state_action_values)**2).mean()
+            
+        # optimize
+        loss_all.backward()
+        torch.nn.utils.clip_grad_value_(model.parameters(), 100)
+        self.optim_all.step()
             
     def optimize_replay_T(self,current_state,next_state,action):
         batch_n=current_state.shape[0]

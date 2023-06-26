@@ -1,11 +1,11 @@
-python main.py --ID eva1 --model ensemble_DQN --env CartPole-v1
-python main.py --ID eva2 --model ensemble_DQN --env CartPole-v1
-python main.py --ID eva3 --model ensemble_DQN --env CartPole-v1
+python main.py --max_steps 150000 --model  ensemble_DQN --env CartPole-v1 --eval 1 --ID 0 --BATCH_SIZE 32
+python main.py --max_steps 150000 --model  ensemble_DQN --env CartPole-v1 --eval 1 --ID 1 --BATCH_SIZE 32
+python main.py --max_steps 150000 --model  ensemble_DQN --env CartPole-v1 --eval 1 --ID 2 --BATCH_SIZE 32
 
+python main.py --max_steps 150000 --model bootstrap_DQN --env CartPole-v1 --eval 1 --ID 0 --BATCH_SIZE 32
+python main.py --max_steps 150000 --model bootstrap_DQN --env CartPole-v1 --eval 1 --ID 1 --BATCH_SIZE 32
+python main.py --max_steps 150000 --model bootstrap_DQN --env CartPole-v1 --eval 1 --ID 2 --BATCH_SIZE 32
 
-python main.py --ID eva1 --model DQN --env Acrobot-v1
-python main.py --ID eva2 --model DQN --env Acrobot-v1
-python main.py --ID eva3 --model DQN --env Acrobot-v1
-python main.py --ID eva1 --model ensemble_DQN --env Acrobot-v1
-python main.py --ID eva2 --model ensemble_DQN --env Acrobot-v1
-python main.py --ID eva3 --model ensemble_DQN --env Acrobot-v1
+python main.py --max_steps 150000 --model           DQN --env CartPole-v1 --eval 1 --ID 0 --BATCH_SIZE 32
+python main.py --max_steps 150000 --model           DQN --env CartPole-v1 --eval 1 --ID 1 --BATCH_SIZE 32
+python main.py --max_steps 150000 --model           DQN --env CartPole-v1 --eval 1 --ID 2 --BATCH_SIZE 32

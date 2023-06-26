@@ -18,9 +18,9 @@ from agent.SAC_Agent import SAC
 from torch.utils.tensorboard import SummaryWriter
 
 parser = argparse.ArgumentParser(description='|model|env|')
-parser.add_argument("--model",default="ensemble_DQN",help="SAC|DQN|PPO|ensemble_DQN|model_1_AI|model_1_AI_actor")
-parser.add_argument("--env",default="MinAtar/Breakout-v1",help="CartPole-v1|MountainCar-v0|LunarLander-v2|Acrobot-v1|Pendulum-v1|ALE/Breakout-v5|ALE/MontezumaRevenge-v5|MinAtar/Breakout-v1")
-parser.add_argument("--BATCH_SIZE",type=int,default=300)
+parser.add_argument("--model",default="ensemble_DQN",help="SAC|DQN|PPO|ensemble_DQN|bootstrap_DQN|model_1_AI|model_1_AI_actor")
+parser.add_argument("--env",default="CartPole-v1",help="CartPole-v1|MountainCar-v0|LunarLander-v2|Acrobot-v1|Pendulum-v1|ALE/Breakout-v5|ALE/MontezumaRevenge-v5|MinAtar/Breakout-v1")
+parser.add_argument("--BATCH_SIZE",type=int,default=32)
 parser.add_argument("--NUM_episodes",type=int,default=20000)
 parser.add_argument("--GAMMA",default=0.99)
 parser.add_argument("--TAU",default=0.005)
@@ -28,14 +28,15 @@ parser.add_argument("--PRINT",default=False)
 parser.add_argument("--render_mode",default="rgb_array")
 parser.add_argument("--device",default="cpu")
 parser.add_argument("--NUM_ensemble",default=5)
-parser.add_argument("--ID",default="0")
+parser.add_argument("--ID",default="DEBUG")
 parser.add_argument("--foot_record",default=False)
 parser.add_argument("--max_steps",type=int,default=1e5)
 parser.add_argument("--repeat_average",type=int,default=3)
-parser.add_argument("--eval_intervel",type=int,default=5)
-parser.add_argument("--eval",type=bool,default=False)
+parser.add_argument("--eval_intervel",type=int,default=10)
+parser.add_argument("--eval",type=int,default=0)
+parser.add_argument("--update_intervel",type=int,default=1)
 args = parser.parse_args()
-if args.env.find("/"):
+if args.env.find("/")>-1:
     args.CNN=True
 else:
     args.CNN=False
@@ -59,11 +60,13 @@ device = torch.device(args.device)
 
 # set the model
 if args.model=="DQN":
-    agent = DQN(state_shape, n_actions,env,args.CNN)
+    agent = DQN(state_shape, n_actions,env,args.CNN,GAMMA=args.GAMMA,BATCH_SIZE=args.BATCH_SIZE)
 elif args.model=="PPO":
     agent = PPO(state_shape, n_actions,env,writer)
 elif args.model=="ensemble_DQN":
-    agent = DQN_ensemble(args.NUM_ensemble,state_shape,n_actions,writer,args.CNN)
+    agent = DQN_ensemble(args.NUM_ensemble,state_shape,n_actions,writer,args.CNN,GAMMA=args.GAMMA,BATCH_SIZE=args.BATCH_SIZE)
+elif args.model=="bootstrap_DQN":
+    agent = DQN_ensemble(args.NUM_ensemble,state_shape,n_actions,writer,args.CNN,GAMMA=args.GAMMA,BATCH_SIZE=args.BATCH_SIZE,bootstrap=True)
 elif args.model=="model_1_AI":
     agent = model_1_AI(args.NUM_ensemble,state_shape,n_actions)
 elif args.model=="SAC":
@@ -110,10 +113,11 @@ if __name__=="__main__":
             state = next_state
 
             # update the network 
-            agent.update() 
+            if steps_done%args.update_intervel==0:
+                agent.update() 
 
             if done:
-                if i_episode%args.eval_intervel and args.eval:
+                if i_episode%args.eval_intervel==0 and args.eval==True:
                     eva_cum_R=evaluate(env,agent,repeat_average=args.repeat_average)
                     print(f"{i_episode}, evaluate cum R: {eva_cum_R}, Total_steps: {steps_done}")
                     writer.add_scalar("eva cum R of steps",eva_cum_R,steps_done)

@@ -6,13 +6,13 @@ import random
 import math
 from utilis import soft_update_model_weights
 class DQN():
-    def __init__(self,n_observations,n_actions,env,CNN_flag=False):
+    def __init__(self,n_observations,n_actions,env,CNN_flag=False,GAMMA=0.99,BATCH_SIZE=300,TAU=0.005):
         if CNN_flag:
             self.Q_net=CNN(n_observations,n_actions)
             self.Q_net_target=CNN(n_observations,n_actions)
         else:
-            self.Q_net=MLP(n_observations,n_actions)
-            self.Q_net_target=MLP(n_observations,n_actions)
+            self.Q_net=MLP(n_observations[0],n_actions)
+            self.Q_net_target=MLP(n_observations[0],n_actions)
 
         self.optimizer=torch.optim.AdamW(self.Q_net.parameters(),lr=1e-4,amsgrad=True)
         self.Q_net_target.load_state_dict(self.Q_net.state_dict())
@@ -22,9 +22,9 @@ class DQN():
         self.EPS_START=0.9
         self.EPS_END = 0.05
         self.EPS_DECAY = 1000
-        self.BATCH_SIZE = 300
-        self.GAMMA = 0.99 
-        self.TAU=0.005
+        self.BATCH_SIZE =BATCH_SIZE 
+        self.GAMMA = GAMMA 
+        self.TAU=TAU
 
     def select_action(self,state,eval=False):
         """select action give a state
