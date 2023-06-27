@@ -6,7 +6,7 @@ import random
 import math
 from utilis import soft_update_model_weights
 class DQN():
-    def __init__(self,n_observations,n_actions,env,CNN_flag=False,GAMMA=0.99,BATCH_SIZE=300,TAU=0.005):
+    def __init__(self,n_observations,n_actions,env,CNN_flag=False,GAMMA=0.99,BATCH_SIZE=300,TAU=0.005,optimistic_prior=False):
         if CNN_flag:
             self.Q_net=CNN(n_observations,n_actions)
             self.Q_net_target=CNN(n_observations,n_actions)

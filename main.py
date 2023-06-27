@@ -27,6 +27,7 @@ parser.add_argument("--TAU",default=0.005)
 parser.add_argument("--PRINT",default=False)
 parser.add_argument("--render_mode",default="rgb_array")
 parser.add_argument("--device",default="cpu")
+parser.add_argument("--prior",default=0,type=float)
 parser.add_argument("--NUM_ensemble",default=5)
 parser.add_argument("--ID",default="DEBUG")
 parser.add_argument("--foot_record",default=False)
@@ -46,8 +47,8 @@ envstr=args.env.split("/")[-1]
 ###############################################################################################
 # config the args
 # set the log file
-set_log_file(f"log/{args.model}_{envstr}_{args.ID}.txt")
-writer = SummaryWriter(f"runs/{envstr}/{args.model}_{envstr}_{args.ID}")
+set_log_file(f"log/{args.model}_{envstr}_prior{args.prior}_{args.ID}.txt")
+writer = SummaryWriter(f"runs/{envstr}/{args.model}_{envstr}_prior{args.prior}_{args.ID}")
 # set env
 env = gym.make(args.env,render_mode=args.render_mode)
 # Get number of actions from gym action space
@@ -60,13 +61,13 @@ device = torch.device(args.device)
 
 # set the model
 if args.model=="DQN":
-    agent = DQN(state_shape, n_actions,env,args.CNN,GAMMA=args.GAMMA,BATCH_SIZE=args.BATCH_SIZE)
+    agent = DQN(state_shape, n_actions,env,args.CNN,GAMMA=args.GAMMA,BATCH_SIZE=args.BATCH_SIZE,optimistic_prior=args.prior)
 elif args.model=="PPO":
     agent = PPO(state_shape, n_actions,env,writer)
 elif args.model=="ensemble_DQN":
-    agent = DQN_ensemble(args.NUM_ensemble,state_shape,n_actions,writer,args.CNN,GAMMA=args.GAMMA,BATCH_SIZE=args.BATCH_SIZE)
+    agent = DQN_ensemble(args.NUM_ensemble,state_shape,n_actions,writer,args.CNN,GAMMA=args.GAMMA,BATCH_SIZE=args.BATCH_SIZE,prior=args.prior)
 elif args.model=="bootstrap_DQN":
-    agent = DQN_ensemble(args.NUM_ensemble,state_shape,n_actions,writer,args.CNN,GAMMA=args.GAMMA,BATCH_SIZE=args.BATCH_SIZE,bootstrap=True)
+    agent = DQN_ensemble(args.NUM_ensemble,state_shape,n_actions,writer,args.CNN,GAMMA=args.GAMMA,BATCH_SIZE=args.BATCH_SIZE,bootstrap=True,prior=args.prior)
 elif args.model=="model_1_AI":
     agent = model_1_AI(args.NUM_ensemble,state_shape,n_actions)
 elif args.model=="SAC":

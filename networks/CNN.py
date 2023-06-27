@@ -4,7 +4,7 @@ from torch.functional import F
 
 class CNN(nn.Module):
 
-    def __init__(self, state_shape, n_actions):
+    def __init__(self, state_shape, n_actions,prior):
         super(CNN, self).__init__()
         self.state_shape=state_shape
         self.conv = nn.Sequential(

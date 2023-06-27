@@ -8,7 +8,7 @@ from networks.CNN import CNN
 
 class GaussianMultiLayerPerceptron(nn.Module):
     
-    def __init__(self, input_dim, output_dim):
+    def __init__(self, input_dim, output_dim,prior=0):
         super().__init__()
         self.input_dim = input_dim
         self.output_dim = output_dim
@@ -16,6 +16,9 @@ class GaussianMultiLayerPerceptron(nn.Module):
         self.fc1 = nn.Linear(self.input_dim, 64)
         self.fc2 = nn.Linear(64, 64)
         self.fc3 = nn.Linear(64, self.output_dim)
+        if prior>0:
+            self.fc3.bias.data=torch.tensor([prior]).float()
+            self.fc3.bias.requires_grad = False
         
     def forward(self, x):
         batch_n=x.shape[0]
@@ -34,10 +37,10 @@ class GaussianMultiLayerPerceptron(nn.Module):
     
 class GaussianMultiLayerCNN(nn.Module):
     
-    def __init__(self, input_dim, output_dim):
+    def __init__(self, input_dim, output_dim,prior=0):
         super().__init__()
-        self.CNN = CNN(input_dim,output_dim)
-        
+        self.CNN = CNN(input_dim,output_dim,prior)
+
     def forward(self, x):
         batch_n=x.shape[0]
         x = self.CNN(x).reshape(batch_n,2,-1)
@@ -58,16 +61,16 @@ class GaussianMixtureMLP(nn.Module):
         hidden_layers (list of ints): hidden layer sizes
 
     """
-    def __init__(self, num_models=5, inputs=1, outputs=1,CNN_flag=False):
+    def __init__(self, num_models=5, inputs=1, outputs=1,CNN_flag=False,prior=0):
         super(GaussianMixtureMLP, self).__init__()
         self.num_models = num_models
         self.inputs = inputs
         self.outputs = outputs
         for i in range(self.num_models):
             if CNN_flag:
-                model = GaussianMultiLayerCNN(self.inputs,self.outputs*2)
+                model = GaussianMultiLayerCNN(self.inputs,self.outputs*2,prior)
             else:
-                model = GaussianMultiLayerPerceptron(self.inputs[0],self.outputs*2)
+                model = GaussianMultiLayerPerceptron(self.inputs[0],self.outputs*2,prior)
             setattr(self, 'model_'+str(i), model)
             optim=torch.optim.AdamW(getattr(self, 'model_' + str(i)).parameters(),lr=0.0001)
             setattr(self,"optim_"+str(i),optim)
@@ -117,21 +120,21 @@ class GaussianMixtureMLP(nn.Module):
         self.train()
         loss_all=0
         for i in range(self.num_models):
-            index=masks[:,i].bool()[:batch_size]
+            index=masks[:,i].bool()
             model = getattr(self, 'model_' + str(i))
             optim = getattr(self, 'optim_' + str(i))
             target_model=getattr(target_net, 'model_' + str(i))
             # forward
-            mean, var = model(current_state[index])
+            mean, var = model(current_state[index][:batch_size])
             # compute the loss
             optim.zero_grad()
 
-            state_action_values = mean.gather(1, action[index]).squeeze()
+            state_action_values = mean.gather(1, action[index][:batch_size]).squeeze()
 
             with torch.no_grad():
-                mean_next,next_state_var=target_model(next_state[index])
+                mean_next,next_state_var=target_model(next_state[index][:batch_size])
                 next_state_values,action_index = mean_next.max(1)
-                value_target=(1-dones[index].squeeze())*next_state_values*gamma+reward[i].squeeze() 
+                value_target=(1-dones[index][:batch_size].squeeze())*next_state_values*gamma+reward[i].squeeze() 
 
             loss_all+=((value_target-state_action_values)**2).mean()
             

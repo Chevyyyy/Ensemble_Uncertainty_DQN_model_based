@@ -6,9 +6,12 @@ from utilis import soft_update_model_weights
 from networks.deep_endemble_NN_model import GaussianMixtureMLP
 from networks.MLP import MLP 
 class DQN_ensemble():
-    def __init__(self,n_model,n_observations,n_actions,writer,CNN_flag=False,GAMMA=0.99,BATCH_SIZE=300,TAU=0.005,bootstrap=False):
-        self.Ensemble_Q_net=GaussianMixtureMLP(n_model,n_observations,n_actions,CNN_flag)
-        self.Ensemble_Q_net_target=GaussianMixtureMLP(n_model,n_observations,n_actions,CNN_flag)
+    def __init__(self,n_model,n_observations,n_actions,writer,CNN_flag=False,GAMMA=0.99,BATCH_SIZE=300,TAU=0.005,bootstrap=False,prior=0):
+
+        
+        
+        self.Ensemble_Q_net=GaussianMixtureMLP(n_model,n_observations,n_actions,CNN_flag,prior=prior)
+        self.Ensemble_Q_net_target=GaussianMixtureMLP(n_model,n_observations,n_actions,CNN_flag,prior=prior)
         # self.value=MLP(n_observations,1)
         # self.target_value=MLP(n_observations,1)
         self.optimizer=torch.optim.AdamW(self.Ensemble_Q_net.parameters(),lr=1e-4,amsgrad=True)
@@ -24,6 +27,7 @@ class DQN_ensemble():
         self.BATCH_SIZE = BATCH_SIZE 
         self.GAMMA = GAMMA 
         self.TAU=TAU
+        self.max_R=1
 
     def select_action1(self,state):
         """select action give a state
@@ -141,6 +145,10 @@ class DQN_ensemble():
         reward_batch = torch.cat(batch.reward)
         dones = torch.cat(batch.terminated)
         masks = torch.cat(batch.mask)
+        
+
+            
+        
         if self.bootstrap==False:
             masks=torch.ones(masks.shape)
         self.Ensemble_Q_net.optimize_replay(state_batch,next_states,action_batch,reward_batch,dones,masks,self.GAMMA,self.Ensemble_Q_net_target,self.BATCH_SIZE)
