@@ -1,11 +1,14 @@
-python main.py --max_steps 150000 --model  ensemble_DQN --env CartPole-v1 --eval 1 --ID 0 --BATCH_SIZE 32 --env MinAtar/Breakout-v1
-python main.py --max_steps 150000 --model  ensemble_DQN --env CartPole-v1 --eval 1 --ID 1 --BATCH_SIZE 32 --env MinAtar/Breakout-v1
-#python main.py --max_steps 150000 --model  ensemble_DQN --env CartPole-v1 --eval 1 --ID 2 --BATCH_SIZE 32 --env MinAtar/Breakout-v1
+python main.py --max_steps 500000 --model           DQN --prior 20 --env MountainCar-v0  --ID 76 --BATCH_SIZE 64 
+python main.py --max_steps 500000 --model           DQN --prior 0 --env  MountainCar-v0 --ID 76 --BATCH_SIZE 64 
+python main.py --max_steps 500000 --model bootstrap_DQN --prior 20 --env MountainCar-v0  --ID 76 --BATCH_SIZE 64 
+python main.py --max_steps 500000 --model bootstrap_DQN --prior 0 --env MountainCar-v0  --ID 76 --BATCH_SIZE 64 
 
-python main.py --max_steps 150000 --model bootstrap_DQN --env CartPole-v1 --eval 1 --ID 0 --BATCH_SIZE 32 --env MinAtar/Breakout-v1
-python main.py --max_steps 150000 --model bootstrap_DQN --env CartPole-v1 --eval 1 --ID 1 --BATCH_SIZE 32 --env MinAtar/Breakout-v1
-#python main.py --max_steps 150000 --model bootstrap_DQN --env CartPole-v1 --eval 1 --ID 2 --BATCH_SIZE 32 --env MinAtar/Breakout-v1
+python main.py --max_steps 500000 --model           DQN --prior 20 --env Acrobot-v1  --ID 76 --BATCH_SIZE 64 
+python main.py --max_steps 500000 --model           DQN --prior 0 --env  Acrobot-v1 --ID 76 --BATCH_SIZE 64 
+python main.py --max_steps 500000 --model bootstrap_DQN --prior 20 --env Acrobot-v1  --ID 76 --BATCH_SIZE 64 
+python main.py --max_steps 500000 --model bootstrap_DQN --prior 0 --env Acrobot-v1  --ID 76 --BATCH_SIZE 64 
 
-python main.py --max_steps 150000 --model           DQN --env CartPole-v1 --eval 1 --ID 0 --BATCH_SIZE 32 --env MinAtar/Breakout-v1
-python main.py --max_steps 150000 --model           DQN --env CartPole-v1 --eval 1 --ID 1 --BATCH_SIZE 32 --env MinAtar/Breakout-v1
-#python main.py --max_steps 150000 --model           DQN --env CartPole-v1 --eval 1 --ID 2 --BATCH_SIZE 32 --env MinAtar/Breakout-v1
+python main.py --max_steps 500000 --model           DQN --prior 20 --env CartPole-v1  --ID 76 --BATCH_SIZE 64 
+python main.py --max_steps 500000 --model           DQN --prior 0 --env  CartPole-v1 --ID 76 --BATCH_SIZE 64 
+python main.py --max_steps 500000 --model bootstrap_DQN --prior 20 --env CartPole-v1  --ID 76 --BATCH_SIZE 64 
+python main.py --max_steps 500000 --model bootstrap_DQN --prior 0 --env CartPole-v1  --ID 76 --BATCH_SIZE 64 

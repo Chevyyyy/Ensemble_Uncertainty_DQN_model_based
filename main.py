@@ -18,8 +18,8 @@ from agent.SAC_Agent import SAC
 from torch.utils.tensorboard import SummaryWriter
 
 parser = argparse.ArgumentParser(description='|model|env|')
-parser.add_argument("--model",default="ensemble_DQN",help="SAC|DQN|PPO|ensemble_DQN|bootstrap_DQN|model_1_AI|model_1_AI_actor")
-parser.add_argument("--env",default="CartPole-v1",help="CartPole-v1|MountainCar-v0|LunarLander-v2|Acrobot-v1|Pendulum-v1|ALE/Breakout-v5|ALE/MontezumaRevenge-v5|MinAtar/Breakout-v1")
+parser.add_argument("--model",default="DQN",help="SAC|DQN|PPO|ensemble_DQN|bootstrap_DQN|model_1_AI|model_1_AI_actor")
+parser.add_argument("--env",default="MountainCar-v0",help="CartPole-v1|MountainCar-v0|LunarLander-v2|Acrobot-v1|Pendulum-v1|ALE/Breakout-v5|ALE/MontezumaRevenge-v5|MinAtar/Breakout-v0|MinAtar/Freeway-v1")
 parser.add_argument("--BATCH_SIZE",type=int,default=32)
 parser.add_argument("--NUM_episodes",type=int,default=20000)
 parser.add_argument("--GAMMA",default=0.99)
@@ -61,9 +61,9 @@ device = torch.device(args.device)
 
 # set the model
 if args.model=="DQN":
-    agent = DQN(state_shape, n_actions,env,args.CNN,GAMMA=args.GAMMA,BATCH_SIZE=args.BATCH_SIZE,optimistic_prior=args.prior)
+    agent = DQN(state_shape, n_actions,env,args.CNN,GAMMA=args.GAMMA,BATCH_SIZE=args.BATCH_SIZE,prior=args.prior)
 elif args.model=="PPO":
-    agent = PPO(state_shape, n_actions,env,writer)
+    agent = PPO(state_shape, n_actions,env,writer,prior=args.prior)
 elif args.model=="ensemble_DQN":
     agent = DQN_ensemble(args.NUM_ensemble,state_shape,n_actions,writer,args.CNN,GAMMA=args.GAMMA,BATCH_SIZE=args.BATCH_SIZE,prior=args.prior)
 elif args.model=="bootstrap_DQN":

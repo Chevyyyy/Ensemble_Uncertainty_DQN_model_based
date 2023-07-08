@@ -1,4 +1,5 @@
 from torch import nn
+import torch
 from torch.functional import F
 class MLP(nn.Module):
 
@@ -7,9 +8,8 @@ class MLP(nn.Module):
         self.layer1 = nn.Linear(n_observations, 128)
         self.layer2 = nn.Linear(128, 128)
         self.layer3 = nn.Linear(128, n_actions)
-        if prior>0:
-            self.layer3.bias.data=prior
-            self.layer3.bias.requires_grad = False
+        self.layer3.bias.data=torch.tensor([prior]).float()
+            # self.layer3.bias.requires_grad = False
 
 
     # Called with either one element to determine next action, or a batch

@@ -114,7 +114,7 @@ class DQN_ensemble():
         """
         if eval==False:
             self.steps_done+=1
-        R,var=self.Ensemble_Q_net(state)
+        R=self.Ensemble_Q_net(state)
         R=R.squeeze()
         var_R_MSE=R.var(0)
         R_sample=R[torch.randint(0,5,(1,))].squeeze()

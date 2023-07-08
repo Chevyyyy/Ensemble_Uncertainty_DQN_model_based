@@ -21,6 +21,10 @@ class CNN(nn.Module):
             nn.ReLU(),
             nn.Linear(in_features=512, out_features=n_actions)
         )
+        self.fc[-1].bias.data=torch.tensor([prior]).float()
+            # self.fc[-1].bias.requires_grad = False
+
+
 
     def forward(self, x):
         x=x.reshape(x.shape[0],x.shape[3],x.shape[2],x.shape[1]).float()

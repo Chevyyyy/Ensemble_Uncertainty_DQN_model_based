@@ -1,0 +1,1 @@
+python main.py --max_steps 150000 --model           DQN --prior 500 --env CartPole-v1  --ID 0 --BATCH_SIZE 32 --env CartPole-v1

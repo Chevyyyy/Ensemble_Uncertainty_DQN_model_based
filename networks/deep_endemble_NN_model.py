@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 from networks.CNN import CNN
+from networks.MLP import MLP 
 
 
 class GaussianMultiLayerPerceptron(nn.Module):
@@ -12,10 +13,9 @@ class GaussianMultiLayerPerceptron(nn.Module):
         super().__init__()
         self.input_dim = input_dim
         self.output_dim = output_dim
-        self.dropout=nn.Dropout(p=0) 
-        self.fc1 = nn.Linear(self.input_dim, 64)
-        self.fc2 = nn.Linear(64, 64)
-        self.fc3 = nn.Linear(64, self.output_dim)
+        self.fc1 = nn.Linear(self.input_dim, 128)
+        self.fc2 = nn.Linear(128, 128)
+        self.fc3 = nn.Linear(128, self.output_dim)
         if prior>0:
             self.fc3.bias.data=torch.tensor([prior]).float()
             self.fc3.bias.requires_grad = False
@@ -24,10 +24,8 @@ class GaussianMultiLayerPerceptron(nn.Module):
         batch_n=x.shape[0]
         x = self.fc1(x)
         x = F.relu(x)
-        x = self.dropout(x)
         x = self.fc2(x)
         x = F.relu(x)
-        x = self.dropout(x)
         x = self.fc3(x).reshape(batch_n,2,-1)
         mean=x[:,0,:]
         variance=x[:,1,:]
@@ -68,9 +66,9 @@ class GaussianMixtureMLP(nn.Module):
         self.outputs = outputs
         for i in range(self.num_models):
             if CNN_flag:
-                model = GaussianMultiLayerCNN(self.inputs,self.outputs*2,prior)
+                model = CNN(self.inputs,self.outputs,prior)
             else:
-                model = GaussianMultiLayerPerceptron(self.inputs[0],self.outputs*2,prior)
+                model = MLP(self.inputs[0],self.outputs,prior)
             setattr(self, 'model_'+str(i), model)
             optim=torch.optim.AdamW(getattr(self, 'model_' + str(i)).parameters(),lr=0.0001)
             setattr(self,"optim_"+str(i),optim)
@@ -83,13 +81,10 @@ class GaussianMixtureMLP(nn.Module):
         variances = []
         for i in range(self.num_models):
             model = getattr(self, 'model_' + str(i))
-            mean, var = model(x)
+            mean = model(x)
             means.append(mean)
-            variances.append(var)
         means = torch.stack(means)
         mean = means.mean(dim=0)
-        variances = torch.stack(variances)
-        variance = (variances + means.pow(2)).mean(dim=0) - mean.pow(2)
         # variance = (variances + (means-means.max(2)[0].unsqueeze(-1)).pow(2)).mean(dim=0)
         # variance = (means-means.max(2)[0].unsqueeze(-1)).var(dim=0)
         # if value_net is not None:
@@ -97,7 +92,7 @@ class GaussianMixtureMLP(nn.Module):
         # else:
         #     variance = (means-means.mean(2).unsqueeze(-1)).var(0)
         # variance=F.relu(variance)+1e-6
-        return means, variance
+        return means
     
     def optimize(self,x_M,t_M):
         self.train()
@@ -125,14 +120,14 @@ class GaussianMixtureMLP(nn.Module):
             optim = getattr(self, 'optim_' + str(i))
             target_model=getattr(target_net, 'model_' + str(i))
             # forward
-            mean, var = model(current_state[index][:batch_size])
+            mean= model(current_state[index][:batch_size])
             # compute the loss
             optim.zero_grad()
 
             state_action_values = mean.gather(1, action[index][:batch_size]).squeeze()
 
             with torch.no_grad():
-                mean_next,next_state_var=target_model(next_state[index][:batch_size])
+                mean_next=target_model(next_state[index][:batch_size])
                 next_state_values,action_index = mean_next.max(1)
                 value_target=(1-dones[index][:batch_size].squeeze())*next_state_values*gamma+reward[i].squeeze() 
 

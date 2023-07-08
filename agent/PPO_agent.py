@@ -7,9 +7,9 @@ from torch.distributions import Normal, Categorical
 from torch import nn
 
 class PPO():
-    def __init__(self,n_observations,n_actions,env,writer):
-        self.actor_net=MLP(n_observations,n_actions)
-        self.critic_net=MLP(n_observations,1)
+    def __init__(self,n_observations,n_actions,env,writer,prior):
+        self.actor_net=MLP(n_observations,n_actions,prior)
+        self.critic_net=MLP(n_observations,1,prior)
         self.actor_optimizer=torch.optim.AdamW(self.actor_net.parameters(),lr=3e-4,amsgrad=True)
         self.critic_optimizer=torch.optim.AdamW(self.critic_net.parameters(),lr=1e-3,amsgrad=True)
         self.writer=writer

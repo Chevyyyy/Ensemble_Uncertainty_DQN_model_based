@@ -6,13 +6,13 @@ import random
 import math
 from utilis import soft_update_model_weights
 class DQN():
-    def __init__(self,n_observations,n_actions,env,CNN_flag=False,GAMMA=0.99,BATCH_SIZE=300,TAU=0.005,optimistic_prior=False):
+    def __init__(self,n_observations,n_actions,env,CNN_flag=False,GAMMA=0.99,BATCH_SIZE=300,TAU=0.005,prior=0):
         if CNN_flag:
-            self.Q_net=CNN(n_observations,n_actions)
-            self.Q_net_target=CNN(n_observations,n_actions)
+            self.Q_net=CNN(n_observations,n_actions,prior)
+            self.Q_net_target=CNN(n_observations,n_actions,prior)
         else:
-            self.Q_net=MLP(n_observations[0],n_actions)
-            self.Q_net_target=MLP(n_observations[0],n_actions)
+            self.Q_net=MLP(n_observations[0],n_actions,prior)
+            self.Q_net_target=MLP(n_observations[0],n_actions,prior)
 
         self.optimizer=torch.optim.AdamW(self.Q_net.parameters(),lr=1e-4,amsgrad=True)
         self.Q_net_target.load_state_dict(self.Q_net.state_dict())
