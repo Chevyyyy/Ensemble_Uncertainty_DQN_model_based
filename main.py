@@ -18,8 +18,8 @@ from agent.SAC_Agent import SAC
 from torch.utils.tensorboard import SummaryWriter
 
 parser = argparse.ArgumentParser(description='|model|env|')
-parser.add_argument("--model",default="DQN",help="SAC|DQN|PPO|ensemble_DQN|bootstrap_DQN|model_1_AI|model_1_AI_actor")
-parser.add_argument("--env",default="MountainCar-v0",help="CartPole-v1|MountainCar-v0|LunarLander-v2|Acrobot-v1|Pendulum-v1|ALE/Breakout-v5|ALE/MontezumaRevenge-v5|MinAtar/Breakout-v0|MinAtar/Freeway-v1")
+parser.add_argument("--model",default="ensemble_DQN",help="SAC|DQN|PPO|ensemble_DQN|bootstrap_DQN|model_1_AI|model_1_AI_actor")
+parser.add_argument("--env",default="CartPole-v1",help="CartPole-v1|MountainCar-v0|LunarLander-v2|Acrobot-v1|Pendulum-v1|ALE/Breakout-v5|ALE/MontezumaRevenge-v5|MinAtar/Breakout-v0|MinAtar/Freeway-v1")
 parser.add_argument("--BATCH_SIZE",type=int,default=32)
 parser.add_argument("--NUM_episodes",type=int,default=20000)
 parser.add_argument("--GAMMA",default=0.99)
@@ -28,6 +28,7 @@ parser.add_argument("--PRINT",default=False)
 parser.add_argument("--render_mode",default="rgb_array")
 parser.add_argument("--device",default="cpu")
 parser.add_argument("--prior",default=0,type=float)
+parser.add_argument("--prior_noise",default=3,type=float)
 parser.add_argument("--NUM_ensemble",default=5)
 parser.add_argument("--ID",default="DEBUG")
 parser.add_argument("--foot_record",default=False)
@@ -47,8 +48,14 @@ envstr=args.env.split("/")[-1]
 ###############################################################################################
 # config the args
 # set the log file
-set_log_file(f"log/{args.model}_{envstr}_prior{args.prior}_{args.ID}.txt")
-writer = SummaryWriter(f"runs/{envstr}/{args.model}_{envstr}_prior{args.prior}_{args.ID}")
+config=f'{args.model}_{envstr}_prior{args.prior}_std{args.prior_noise}_{args.ID}'
+print("###########################")
+print("###########################")
+print("trainning start: ",config)
+print("###########################")
+print("###########################")
+set_log_file(f"log/{config}.txt")
+writer = SummaryWriter(f"runs/{envstr}/{config}")
 # set env
 env = gym.make(args.env,render_mode=args.render_mode)
 # Get number of actions from gym action space
@@ -65,9 +72,9 @@ if args.model=="DQN":
 elif args.model=="PPO":
     agent = PPO(state_shape, n_actions,env,writer,prior=args.prior)
 elif args.model=="ensemble_DQN":
-    agent = DQN_ensemble(args.NUM_ensemble,state_shape,n_actions,writer,args.CNN,GAMMA=args.GAMMA,BATCH_SIZE=args.BATCH_SIZE,prior=args.prior)
+    agent = DQN_ensemble(args.NUM_ensemble,state_shape,n_actions,writer,args.CNN,GAMMA=args.GAMMA,BATCH_SIZE=args.BATCH_SIZE,prior=args.prior,prior_noise=args.prior_noise)
 elif args.model=="bootstrap_DQN":
-    agent = DQN_ensemble(args.NUM_ensemble,state_shape,n_actions,writer,args.CNN,GAMMA=args.GAMMA,BATCH_SIZE=args.BATCH_SIZE,bootstrap=True,prior=args.prior)
+    agent = DQN_ensemble(args.NUM_ensemble,state_shape,n_actions,writer,args.CNN,GAMMA=args.GAMMA,BATCH_SIZE=args.BATCH_SIZE,bootstrap=True,prior=args.prior,prior_noise=args.prior_noise)
 elif args.model=="model_1_AI":
     agent = model_1_AI(args.NUM_ensemble,state_shape,n_actions)
 elif args.model=="SAC":
@@ -134,15 +141,15 @@ if __name__=="__main__":
                 break
 
     print('Complete')
-    plt.plot(cum_R)
-    plt.savefig(f"imgs/cumR_episode_{args.model}_{i_episode}_{args.ID}.png")
+    # plt.plot(cum_R)
+    # plt.savefig(f"imgs/cumR_episode_{args.model}_{i_episode}_{args.ID}.png")
     # plt.show()
-    plt.close()
+    # plt.close()
 
-    plt.plot(steps_episode,cum_R)
-    plt.savefig(f"imgs/cumR_steps_{args.model}_{i_episode}_{args.ID}.png")
+    # plt.plot(steps_episode,cum_R)
+    # plt.savefig(f"imgs/cumR_steps_{args.model}_{i_episode}_{args.ID}.png")
     # plt.show()
-    plt.close()
+    # plt.close()
 
     # torch.save(policy_net.state_dict(),f"models_saved/{args.env}_{args.model}_{i_episode}_{args.ID}.pt")    
 

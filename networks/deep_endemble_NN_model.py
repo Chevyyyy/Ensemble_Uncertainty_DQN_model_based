@@ -5,6 +5,7 @@ import torch.nn.functional as F
 import numpy as np
 from networks.CNN import CNN
 from networks.MLP import MLP 
+import numpy as np
 
 
 class GaussianMultiLayerPerceptron(nn.Module):
@@ -59,16 +60,16 @@ class GaussianMixtureMLP(nn.Module):
         hidden_layers (list of ints): hidden layer sizes
 
     """
-    def __init__(self, num_models=5, inputs=1, outputs=1,CNN_flag=False,prior=0):
+    def __init__(self, num_models=5, inputs=1, outputs=1,CNN_flag=False,prior=0,prior_noise=0):
         super(GaussianMixtureMLP, self).__init__()
         self.num_models = num_models
         self.inputs = inputs
         self.outputs = outputs
         for i in range(self.num_models):
             if CNN_flag:
-                model = CNN(self.inputs,self.outputs,prior)
+                model = CNN(self.inputs,self.outputs,prior+prior_noise*np.random.normal())
             else:
-                model = MLP(self.inputs[0],self.outputs,prior)
+                model = MLP(self.inputs[0],self.outputs,prior+prior_noise*np.random.normal())
             setattr(self, 'model_'+str(i), model)
             optim=torch.optim.AdamW(getattr(self, 'model_' + str(i)).parameters(),lr=0.0001)
             setattr(self,"optim_"+str(i),optim)

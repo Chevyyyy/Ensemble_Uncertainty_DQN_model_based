@@ -6,12 +6,12 @@ from utilis import soft_update_model_weights
 from networks.deep_endemble_NN_model import GaussianMixtureMLP
 from networks.MLP import MLP 
 class DQN_ensemble():
-    def __init__(self,n_model,n_observations,n_actions,writer,CNN_flag=False,GAMMA=0.99,BATCH_SIZE=300,TAU=0.005,bootstrap=False,prior=0):
+    def __init__(self,n_model,n_observations,n_actions,writer,CNN_flag=False,GAMMA=0.99,BATCH_SIZE=300,TAU=0.005,bootstrap=False,prior=0,prior_noise=0):
 
         
         
-        self.Ensemble_Q_net=GaussianMixtureMLP(n_model,n_observations,n_actions,CNN_flag,prior=prior)
-        self.Ensemble_Q_net_target=GaussianMixtureMLP(n_model,n_observations,n_actions,CNN_flag,prior=prior)
+        self.Ensemble_Q_net=GaussianMixtureMLP(n_model,n_observations,n_actions,CNN_flag,prior=prior,prior_noise=prior_noise)
+        self.Ensemble_Q_net_target=GaussianMixtureMLP(n_model,n_observations,n_actions,CNN_flag,prior=prior,prior_noise=prior_noise)
         # self.value=MLP(n_observations,1)
         # self.target_value=MLP(n_observations,1)
         self.optimizer=torch.optim.AdamW(self.Ensemble_Q_net.parameters(),lr=1e-4,amsgrad=True)
