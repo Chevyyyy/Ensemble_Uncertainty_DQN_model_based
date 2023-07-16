@@ -9,7 +9,7 @@ class MLP(nn.Module):
         self.layer2 = nn.Linear(128, 128)
         self.layer3 = nn.Linear(128, n_actions)
         self.layer3.bias.data=torch.tensor([prior]).float()
-            # self.layer3.bias.requires_grad = False
+        # self.layer3.bias.requires_grad = False
 
 
     # Called with either one element to determine next action, or a batch

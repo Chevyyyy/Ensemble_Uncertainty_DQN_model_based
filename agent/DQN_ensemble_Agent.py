@@ -5,8 +5,10 @@ import numpy as np
 from utilis import soft_update_model_weights
 from networks.deep_endemble_NN_model import GaussianMixtureMLP
 from networks.MLP import MLP 
+import random
+import math
 class DQN_ensemble():
-    def __init__(self,n_model,n_observations,n_actions,writer,CNN_flag=False,GAMMA=0.99,BATCH_SIZE=300,TAU=0.005,bootstrap=False,prior=0,prior_noise=0):
+    def __init__(self,env,n_model,n_observations,n_actions,writer,CNN_flag=False,GAMMA=0.99,BATCH_SIZE=300,TAU=0.005,bootstrap=False,prior=0,prior_noise=0):
 
         
         
@@ -19,6 +21,7 @@ class DQN_ensemble():
         self.Ensemble_Q_net_target.load_state_dict(self.Ensemble_Q_net.state_dict())
         # self.target_value.load_state_dict(self.value.state_dict())
         self.writer=writer
+        self.env=env
         self.n_actions=n_actions
         
         self.bootstrap=bootstrap
@@ -104,7 +107,7 @@ class DQN_ensemble():
             E=1
         return action,E,1
 
-    def select_action(self,state,eval=False):
+    def select_action(self,state,eval=False,k=-1):
         """select action give a state
 
         Args:
@@ -117,9 +120,19 @@ class DQN_ensemble():
         R=self.Ensemble_Q_net(state)
         R=R.squeeze()
         var_R_MSE=R.var(0)
-        R_sample=R[torch.randint(0,5,(1,))].squeeze()
+        if k>-1:
+            R_sample=R[k].squeeze()
+        else:
+            R_sample=R[torch.randint(0,5,(1,))].squeeze()
+        # R_sample=R.gather(0,torch.randint(0,self.n_model,(self.n_actions,)).reshape(-1,self.n_actions))
+        eps_threshold = 0.05 + (0.9 - 0.05) * \
+        math.exp(-1. * self.steps_done / 1000)
 
-        action=torch.argmax(R_sample).reshape(1,1)
+        if random.random()>eps_threshold:
+            action=torch.argmax(R_sample).reshape(1,1)
+        else:
+            action=torch.tensor([[self.env.action_space.sample()]], dtype=torch.long)
+
         action1=torch.argmax(R.mean(0)).reshape(1,1)
         if eval:
             return action1,0,1
@@ -128,6 +141,9 @@ class DQN_ensemble():
         if action.item()-action1.item()!=0:
             E=1
         return action,E,1
+    
+    
+    
     
     def update(self):
         batch_UPB=self.BATCH_SIZE*(1+9*self.bootstrap)

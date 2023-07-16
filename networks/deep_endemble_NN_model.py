@@ -129,6 +129,8 @@ class GaussianMixtureMLP(nn.Module):
 
             with torch.no_grad():
                 mean_next=target_model(next_state[index][:batch_size])
+                # mean_next=target_net(next_state[index][:batch_size]).mean(0)
+                # mean_next=target_net(next_state[index][:batch_size])[torch.randint(0,5,(1,)).item()]
                 next_state_values,action_index = mean_next.max(1)
                 value_target=(1-dones[index][:batch_size].squeeze())*next_state_values*gamma+reward[i].squeeze() 
 

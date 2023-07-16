@@ -15,12 +15,11 @@ def Thompson_sampling(means,vars):
         R.append(np.random.normal(means[k],vars[k]**0.5))
     R=np.array(R)
     return torch.tensor(np.argmax(R)).unsqueeze(0)
-    
 
-def getRM(model,plot=True,filename="RM.png",ensemble=False):
+def getRM_mean(model,plot=True,filename="RM_mean.png"):
     # Define the range of x and y values
-    x_values = np.linspace(-1.2, 0.6, num=100)
-    y_values = np.linspace(-0.07, 0.07, num=100)
+    x_values = np.linspace(0, 10, num=20)
+    y_values = np.linspace(0, 10, num=20)
 
     # Create a meshgrid of x and y values
     xx, yy = np.meshgrid(x_values, y_values)
@@ -31,17 +30,41 @@ def getRM(model,plot=True,filename="RM.png",ensemble=False):
     with torch.no_grad():
         model.eval()
         RM=model.forward(torch.from_numpy(points).type(torch.float32))
-        if ensemble:
-            RM=RM[0].max(1)[1]
-        else:
-            RM=RM.max(1)[1]
+        RM=RM.mean(0).mean(1)
             
 
-        plt.scatter(points[:,0], points[:,1], c=RM,cmap="viridis")
+        plt.scatter(points[:,0], points[:,1], c=RM,cmap="Greys")
 
 
         plt.colorbar()
-        plt.savefig(f"imgs\{filename}")
+        plt.savefig(f"imgs/{filename}")
+
+        if plot:
+            plt.show()
+        plt.close()   
+
+def getRM(model,plot=True,filename="RM.png"):
+    # Define the range of x and y values
+    x_values = np.linspace(0, 10, num=20)
+    y_values = np.linspace(0, 10, num=20)
+
+    # Create a meshgrid of x and y values
+    xx, yy = np.meshgrid(x_values, y_values)
+
+    # Stack the x and y values to create a 2D array of all the 2D points
+    points = np.column_stack((xx.ravel(), yy.ravel()))
+
+    with torch.no_grad():
+        model.eval()
+        RM=model.forward(torch.from_numpy(points).type(torch.float32))
+        RM=RM.var(0).mean(1)
+            
+
+        plt.scatter(points[:,0], points[:,1], c=RM,cmap="Greys")
+
+
+        plt.colorbar()
+        plt.savefig(f"imgs/{filename}")
 
         if plot:
             plt.show()

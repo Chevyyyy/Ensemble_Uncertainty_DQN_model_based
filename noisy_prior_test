@@ -1,6 +1,14 @@
-python main.py --max_steps 500000 --model bootstrap_DQN --prior 20 --prior_noise 10 --env MountainCar-v0  --ID 710 --BATCH_SIZE 64 
+python main.py --max_steps 200000 --model           DQN --prior  0 --prior_noise 0 --env MountainCar-v0  --ID 711 --BATCH_SIZE 64 
+python main.py --max_steps 200000 --model           DQN --prior 20 --prior_noise 0 --env MountainCar-v0  --ID 711 --BATCH_SIZE 64 
+python main.py --max_steps 200000 --model bootstrap_DQN --prior  0 --prior_noise 0 --env MountainCar-v0  --ID 711 --BATCH_SIZE 64 
+python main.py --max_steps 200000 --model bootstrap_DQN --prior 20 --prior_noise 0 --env MountainCar-v0  --ID 711 --BATCH_SIZE 64 
+python main.py --max_steps 200000 --model bootstrap_DQN --prior 20 --prior_noise 2 --env MountainCar-v0  --ID 711 --BATCH_SIZE 64 
 
-python main.py --max_steps 500000 --model bootstrap_DQN --prior 20 --prior_noise 10 --env Acrobot-v1  --ID 710 --BATCH_SIZE 64 
+python main.py --max_steps 200000 --model bootstrap_DQN --prior 20 --prior_noise 2 --env Acrobot-v1  --ID 711_1 --BATCH_SIZE 64 
+python main.py --max_steps 200000 --model bootstrap_DQN --prior 20 --prior_noise 2 --env Acrobot-v1  --ID 711_2 --BATCH_SIZE 64 
+python main.py --max_steps 200000 --model bootstrap_DQN --prior 20 --prior_noise 2 --env Acrobot-v1  --ID 711_3 --BATCH_SIZE 64 
 
-python main.py --max_steps 500000 --model bootstrap_DQN --prior 20 --prior_noise 10 --env CartPole-v1  --ID 710 --BATCH_SIZE 64 
+python main.py --max_steps 200000 --model bootstrap_DQN --prior 20 --prior_noise 2 --env CartPole-v1  --ID 711_1 --BATCH_SIZE 64 
+python main.py --max_steps 200000 --model bootstrap_DQN --prior 20 --prior_noise 2 --env CartPole-v1  --ID 711_2 --BATCH_SIZE 64 
+python main.py --max_steps 200000 --model bootstrap_DQN --prior 20 --prior_noise 2 --env CartPole-v1  --ID 711_3 --BATCH_SIZE 64 
 

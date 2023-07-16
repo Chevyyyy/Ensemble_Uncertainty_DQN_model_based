@@ -8,8 +8,8 @@ def get_E_R(logfile):
     with open(logfile, 'r') as file:
         for line in file:
             # Process each line
-            E.append(float(line.split()[-1]))
-            R.append(float(line.split()[3].split(",")[0]))
+            R.append(float(line.split()[3]))
+            E.append(float(line.split()[7]))
     return E,R
 def get_state(logfile):
     s1=[]
@@ -57,13 +57,13 @@ def plot_three_median_fill_area(E_ensemble,filename=None,reward=True):
         plt.savefig(f"imgs/results/{filename}.png")
 
     plt.show()
-def plot_three_median_fill_area_compare(E_ensemble,E_DQN,filename=None,reward=True):
-    median_losses=E_ensemble[:,1]
-    lower_bounds = E_ensemble[:,0] 
-    upper_bounds = E_ensemble[:,-1]
-    median_losses_DQN=E_DQN[:,1]
-    lower_bounds_DQN = E_DQN[:,0] 
-    upper_bounds_DQN = E_DQN[:,-1]
+def plot_three_median_fill_area_compare(E_ensemble,E_DQN,filename=None,reward=True,w=50):
+    median_losses=moving_average(E_ensemble[:,1],w)
+    lower_bounds =moving_average (E_ensemble[:,0],w) 
+    upper_bounds =moving_average (E_ensemble[:,-1],w)
+    median_losses_DQN=moving_average(E_DQN[:,1],w)
+    lower_bounds_DQN =moving_average( E_DQN[:,0],w) 
+    upper_bounds_DQN =moving_average( E_DQN[:,-1],w)
 
 
     # Create the x-axis values
@@ -114,8 +114,9 @@ def timestep_Reward(logfilename,save=""):
         plt.savefig(f"imgs/results/{save}.png")
 
     plt.show()
-    
-timestep_Reward("log/model_1_AI_CartPole-v1_.txt","cartpole_timestep_R_double uncertainty")
+def moving_average(x, w):
+    return np.convolve(x, np.ones(w), 'valid') / w   
+# timestep_Reward("log/bootstrap_DQN_Acrobot-v1_prior0.0_0.txt","cartpole_timestep_R_double uncertainty")
     
     
     
@@ -143,34 +144,34 @@ timestep_Reward("log/model_1_AI_CartPole-v1_.txt","cartpole_timestep_R_double un
     
     
     
-    
-# E1,R1=get_E_R("log\ensemble_DQN_1.txt")
-# E2,R2=get_E_R("log\ensemble_DQN_2.txt")
-# E3,R3=get_E_R("log\ensemble_DQN_3.txt")
+  
+E1,R1=get_E_R("log/bootstrap_DQN_Acrobot-v1_prior20.0_std2.0_711_1.txt")
+E2,R2=get_E_R("log/bootstrap_DQN_Acrobot-v1_prior20.0_std2.0_711_2.txt")
+E3,R3=get_E_R("log/bootstrap_DQN_Acrobot-v1_prior20.0_std2.0_711_3.txt")
 
-# E_ensemble=np.array([E1,E2,E3]).T
-# R_ensemble=np.array([R1,R2,R3]).T
-# E_sort_en=np.sort(E_ensemble,1)
-# R_sort_en=np.sort(R_ensemble,1)
+clip=2000
+E_ensemble=np.array([E1[:clip],E2[:clip],E3[:clip]]).T
+R_ensemble=np.array([R1[:clip],R2[:clip],R3[:clip]]).T
+E_sort_en=np.sort(E_ensemble,1)
+R_sort_en=np.sort(R_ensemble,1)
 
 # plot_three_median_fill_area(E_sort_en,"E_rate_ensemble",reward=False)
 # plot_three_median_fill_area(R_sort_en,"R_ensemble",reward=True)
 
-# E1,R1=get_E_R("log\DQN_1.txt")
-# E2,R2=get_E_R("log\DQN_2.txt")
-# E3,R3=get_E_R("log\DQN_3.txt")
+E1,R1=get_E_R("log/bootstrap_DQN_Acrobot-v1_prior0.0_73.txt")
+E2,R2=get_E_R("log/bootstrap_DQN_Acrobot-v1_prior0.0_76.txt")
+E3,R3=get_E_R("log/bootstrap_DQN_Acrobot-v1_prior0.0_79.txt")
+# E1,R1=get_E_R("log/DQN_Acrobot-v1_prior0.0_79.txt")
+# E2,R2=get_E_R("log/DQN_Acrobot-v1_prior0.0_76.txt")
+# E3,R3=get_E_R("log/DQN_Acrobot-v1_prior0.0_73.txt")
 
-# E_ensemble=np.array([E1,E2,E3]).T
-# R_ensemble=np.array([R1,R2,R3]).T
-# E_sort=np.sort(E_ensemble,1)
-# R_sort=np.sort(R_ensemble,1)
-
-
+E_ensemble=np.array([E1[:clip],E2[:clip],E3[:clip]]).T
+R_ensemble=np.array([R1[:clip],R2[:clip],R3[:clip]]).T
+E_sort=np.sort(E_ensemble,1)
+R_sort=np.sort(R_ensemble,1)
 
 # plot_three_median_fill_area(E_sort,"E_rate_DQN",reward=False)
 # plot_three_median_fill_area(R_sort,"R_DQN",reward=True)
-# plot_three_median_fill_area_compare(R_sort_en,R_sort,"compare_R",True)
-# plot_three_median_fill_area_compare(E_sort_en,E_sort,"compare_E",False)
 
-
-
+plot_three_median_fill_area_compare(R_sort_en,R_sort,"compare_b202_b0_R",True)
+plot_three_median_fill_area_compare(E_sort_en,E_sort,"compare_b202_b0_E",False)
