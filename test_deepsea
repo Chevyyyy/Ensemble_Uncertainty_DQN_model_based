@@ -1,0 +1,78 @@
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_5  --ID 726_1_bs  --DP_init 0 --p_net 0 --var_net 0 
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_5  --ID 726_2_bs  --DP_init 0 --p_net 0 --var_net 0
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_5  --ID 726_3_bs --DP_init 0 --p_net 0 --var_net 0
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_5  --ID 726_4_bs   --DP_init 0 --p_net 0 --var_net 0
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_5  --ID 726_5_bs  --DP_init 0 --p_net 0 --var_net 0
+
+
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_6  --ID 726_1_bs  --DP_init 0 --p_net 0 --var_net 0 
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_6  --ID 726_2_bs  --DP_init 0 --p_net 0 --var_net 0
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_6  --ID 726_3_bs --DP_init 0 --p_net 0 --var_net 0
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_6  --ID 726_4_bs   --DP_init 0 --p_net 0 --var_net 0
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_6  --ID 726_5_bs  --DP_init 0 --p_net 0 --var_net 0
+
+
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_7  --ID 726_1_bs  --DP_init 0 --p_net 0 --var_net 0 
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_7  --ID 726_2_bs  --DP_init 0 --p_net 0 --var_net 0
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_7  --ID 726_3_bs --DP_init 0 --p_net 0 --var_net 0
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_7  --ID 726_4_bs   --DP_init 0 --p_net 0 --var_net 0
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_7  --ID 726_5_bs  --DP_init 0 --p_net 0 --var_net 0
+
+
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_8  --ID 726_1_bs  --DP_init 0 --p_net 0 --var_net 0 
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_8  --ID 726_2_bs  --DP_init 0 --p_net 0 --var_net 0
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_8  --ID 726_3_bs --DP_init 0 --p_net 0 --var_net 0
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_8  --ID 726_4_bs   --DP_init 0 --p_net 0 --var_net 0
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_8  --ID 726_5_bs  --DP_init 0 --p_net 0 --var_net 0
+
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_9  --ID 726_1_bs  --DP_init 0 --p_net 0 --var_net 0 
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_9  --ID 726_2_bs  --DP_init 0 --p_net 0 --var_net 0
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_9  --ID 726_3_bs --DP_init 0 --p_net 0 --var_net 0
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_9  --ID 726_4_bs   --DP_init 0 --p_net 0 --var_net 0
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_9  --ID 726_5_bs  --DP_init 0 --p_net 0 --var_net 0
+
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_10  --ID 726_1_bs  --DP_init 0 --p_net 0 --var_net 0 
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_10  --ID 726_2_bs  --DP_init 0 --p_net 0 --var_net 0
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_10  --ID 726_3_bs --DP_init 0 --p_net 0 --var_net 0
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_10  --ID 726_4_bs   --DP_init 0 --p_net 0 --var_net 0
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_10  --ID 726_5_bs  --DP_init 0 --p_net 0 --var_net 0
+
+
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_5  --ID 726_1_bs  --DP_init 0 --p_net 0 --var_net 0 
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_5  --ID 726_2_bs  --DP_init 0 --p_net 0 --var_net 0
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_5  --ID 726_3_bs --DP_init 0 --p_net 0 --var_net 0
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_5  --ID 726_4_bs   --DP_init 0 --p_net 0 --var_net 0
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_5  --ID 726_5_bs  --DP_init 0 --p_net 0 --var_net 0
+
+
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_6  --ID 726_1_bs  --DP_init 0 --p_net 0 --var_net 0 
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_6  --ID 726_2_bs  --DP_init 0 --p_net 0 --var_net 0
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_6  --ID 726_3_bs --DP_init 0 --p_net 0 --var_net 0
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_6  --ID 726_4_bs   --DP_init 0 --p_net 0 --var_net 0
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_6  --ID 726_5_bs  --DP_init 0 --p_net 0 --var_net 0
+
+
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_7  --ID 726_1_bs  --DP_init 0 --p_net 0 --var_net 0 
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_7  --ID 726_2_bs  --DP_init 0 --p_net 0 --var_net 0
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_7  --ID 726_3_bs --DP_init 0 --p_net 0 --var_net 0
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_7  --ID 726_4_bs   --DP_init 0 --p_net 0 --var_net 0
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_7  --ID 726_5_bs  --DP_init 0 --p_net 0 --var_net 0
+
+
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_8  --ID 726_1_bs  --DP_init 0 --p_net 0 --var_net 0 
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_8  --ID 726_2_bs  --DP_init 0 --p_net 0 --var_net 0
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_8  --ID 726_3_bs --DP_init 0 --p_net 0 --var_net 0
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_8  --ID 726_4_bs   --DP_init 0 --p_net 0 --var_net 0
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_8  --ID 726_5_bs  --DP_init 0 --p_net 0 --var_net 0
+
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_9  --ID 726_1_bs  --DP_init 0 --p_net 0 --var_net 0 
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_9  --ID 726_2_bs  --DP_init 0 --p_net 0 --var_net 0
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_9  --ID 726_3_bs --DP_init 0 --p_net 0 --var_net 0
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_9  --ID 726_4_bs   --DP_init 0 --p_net 0 --var_net 0
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_9  --ID 726_5_bs  --DP_init 0 --p_net 0 --var_net 0
+
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_10  --ID 726_1_bs  --DP_init 0 --p_net 0 --var_net 0 
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_10  --ID 726_2_bs  --DP_init 0 --p_net 0 --var_net 0
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_10  --ID 726_3_bs --DP_init 0 --p_net 0 --var_net 0
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_10  --ID 726_4_bs   --DP_init 0 --p_net 0 --var_net 0
+python main.py --NUM_episodes 10000 --model bootstrap_DQN --real_bootstrap 0 --prior 0  --prior_noise 0 --env DeepSea_10  --ID 726_5_bs  --DP_init 0 --p_net 0 --var_net 0

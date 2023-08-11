@@ -8,8 +8,7 @@ class MLP(nn.Module):
         self.layer1 = nn.Linear(n_observations, 128)
         self.layer2 = nn.Linear(128, 128)
         self.layer3 = nn.Linear(128, n_actions)
-        self.layer3.bias.data=torch.tensor([prior]).float()
-        # self.layer3.bias.requires_grad = False
+        # self.layer3.bias.data=torch.tensor([prior]).float()
 
 
     # Called with either one element to determine next action, or a batch
@@ -18,4 +17,5 @@ class MLP(nn.Module):
         x = F.relu(self.layer1(x))
         x = F.relu(self.layer2(x))
         return self.layer3(x)
+    
 
