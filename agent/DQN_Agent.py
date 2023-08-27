@@ -6,7 +6,7 @@ import random
 import math
 from utilis import soft_update_model_weights
 class DQN():
-    def __init__(self,n_observations,n_actions,env,CNN_flag=False,GAMMA=0.99,BATCH_SIZE=300,TAU=0.005,prior=0):
+    def __init__(self,n_observations,n_actions,env,CNN_flag=False,GAMMA=0.99,BATCH_SIZE=300,TAU=0.005,prior=0,buffer_size=30000):
         if CNN_flag:
             self.Q_net=CNN(n_observations,n_actions,prior)
             self.Q_net_target=CNN(n_observations,n_actions,prior)
@@ -16,7 +16,7 @@ class DQN():
 
         self.optimizer=torch.optim.AdamW(self.Q_net.parameters(),lr=1e-4,amsgrad=True)
         self.Q_net_target.load_state_dict(self.Q_net.state_dict())
-        self.buffer=ReplayMemory(10000)
+        self.buffer=ReplayMemory(buffer_size)
         self.env=env
         self.steps_done=0
         self.EPS_START=0.9
@@ -45,6 +45,7 @@ class DQN():
         action0=self.Q_net(state).max(1)[1].view(1, 1)
         action1=torch.tensor([[self.env.action_space.sample()]], dtype=torch.long)
 
+        return action1,1,1
         if sample > eps_threshold or eval:
                     return action0,0,1 
         else:

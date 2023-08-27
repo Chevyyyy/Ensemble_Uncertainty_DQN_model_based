@@ -3,7 +3,7 @@ from scipy.stats import norm
 from buffer import ReplayMemory
 import numpy as np
 from utilis import soft_update_model_weights
-from networks.deep_endemble_NN_model import GaussianMixtureMLP
+from networks.deep_ensemble_NN_model import GaussianMixtureMLP
 class model_1_AI():
     def __init__(self,n_model,n_observations,n_actions):
         self.Ensemble_Q_net=GaussianMixtureMLP(n_model,n_observations,n_actions)

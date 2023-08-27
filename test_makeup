@@ -1,0 +1,7 @@
+python main.py --NUM_episodes 100 --model bootstrap_DQN --real_bootstrap 1 --env MinAtar/Freeway-v1  --ID BS_0  --DP_init 0 --p_net 0 --log_folder Freeway 
+python main.py --NUM_episodes 100 --model bootstrap_DQN --real_bootstrap 1 --env MinAtar/Freeway-v1  --ID BSP_0  --DP_init 0 --p_net 1 --log_folder Freeway 
+python main.py --NUM_episodes 100 --model bootstrap_DQN --real_bootstrap 1 --env MinAtar/Freeway-v1  --ID BSDP_0  --DP_init 1 --p_net 1 --log_folder Freeway 
+# python main.py --NUM_episodes 100 --model bootstrap_DQN --real_bootstrap 1 --env MinAtar/Freeway-v1  --ID BS_1  --DP_init 0 --p_net 0 --log_folder Freeway 
+# python main.py --NUM_episodes 100 --model bootstrap_DQN --real_bootstrap 1 --env MinAtar/Freeway-v1  --ID BS_2  --DP_init 0 --p_net 0 --log_folder Freeway 
+# python main.py --NUM_episodes 100 --model bootstrap_DQN --real_bootstrap 1 --env MinAtar/Freeway-v1  --ID BS_3  --DP_init 0 --p_net 0 --log_folder Freeway 
+# python main.py --NUM_episodes 100 --model bootstrap_DQN --real_bootstrap 1 --env MinAtar/Freeway-v1  --ID BS_4  --DP_init 0 --p_net 0 --log_folder Freeway 

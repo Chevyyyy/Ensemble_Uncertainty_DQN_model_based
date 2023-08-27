@@ -1,6 +1,0 @@
-python main.py --max_steps 50000 --model bootstrap_DQN --prior  0 --prior_noise 0 --env maze-random-5x5-v0  --ID sss_real --BATCH_SIZE 64 --OLD_GYM 1
-python main.py --max_steps 50000 --model bootstrap_DQN --prior  20 --prior_noise 0 --env maze-sample-5x5-v0  --ID sss_real --BATCH_SIZE 64 --OLD_GYM 1
-python main.py --max_steps 50000 --model bootstrap_DQN --prior  20 --prior_noise 5 --env maze-sample-5x5-v0  --ID sss_real --BATCH_SIZE 64 --OLD_GYM 1
-
-
-

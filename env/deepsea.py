@@ -14,6 +14,8 @@ class DeepSea(gym.Env):
         self._size = size
         self.state = 0
 
+        if seed is None:
+            seed = int(np.random.randint(100))
         rng = np.random.RandomState(seed)
         self._action_mapping = rng.binomial(1, 0.5, size)
 

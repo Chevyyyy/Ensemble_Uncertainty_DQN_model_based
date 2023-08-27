@@ -1,6 +1,0 @@
-# CartPole
-python main.py --NUM_episodes 600 --model bootstrap_DQN --real_bootstrap 1 --prior 0  --prior_noise 0 --env LunarLander-v2  --ID 726_1_bs  --DP_init 0 --p_net 0 --var_net 0
-python main.py --NUM_episodes 600 --model bootstrap_DQN --real_bootstrap 1 --prior 0  --prior_noise 0 --env LunarLander-v2  --ID 726_2_bs  --DP_init 0 --p_net 0 --var_net 0
-python main.py --NUM_episodes 600 --model bootstrap_DQN --real_bootstrap 1 --prior 0  --prior_noise 0 --env LunarLander-v2  --ID 726_3_bs  --DP_init 0 --p_net 0 --var_net 0
-python main.py --NUM_episodes 600 --model bootstrap_DQN --real_bootstrap 1 --prior 0  --prior_noise 0 --env LunarLander-v2  --ID 726_4_bs  --DP_init 0 --p_net 0 --var_net 0
-python main.py --NUM_episodes 600 --model bootstrap_DQN --real_bootstrap 1 --prior 0  --prior_noise 0 --env LunarLander-v2  --ID 726_5_bs  --DP_init 0 --p_net 0 --var_net 0

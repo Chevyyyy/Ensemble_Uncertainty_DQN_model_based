@@ -3,7 +3,7 @@ from scipy.stats import norm
 from buffer import ReplayMemory
 import numpy as np
 from utilis import soft_update_model_weights
-from networks.deep_endemble_NN_model import GaussianMixtureMLP
+from networks.deep_ensemble_NN_model import GaussianMixtureMLP
 from networks.MLP import MLP 
 import random
 from torch.distributions import Categorical
@@ -12,18 +12,19 @@ import math
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class DQN_ensemble():
-    def __init__(self,env,n_model,n_observations,n_actions,writer,CNN_flag=False,GAMMA=0.99,BATCH_SIZE=300,TAU=0.005,bootstrap=False,prior=0,prior_noise=0,p_net=False,DP_init=False,real_bootstrap=False,A_change=False,var_net_flag=False,T_net=False):
+    def __init__(self,env,n_model,n_observations,n_actions,writer,CNN_flag=False,GAMMA=0.99,BATCH_SIZE=300,TAU=0.005,bootstrap=False,prior=0,prior_noise=0,p_net=False,DP_init=False,real_bootstrap=False,A_change=False,var_net_flag=False,T_net=False,buffer_size=30000,lr=1e-4):
 
         if prior != 0 or prior_noise!=0:
             optimistic_init=True
         else:
             optimistic_init=False   
         
-        self.Ensemble_Q_net_p=GaussianMixtureMLP(n_model,n_observations,n_actions,CNN_flag,prior=prior,prior_noise=prior_noise,optimistic_init=False,env=env,with_piror=p_net,var_net_flag=var_net_flag).to(device)
-        self.Ensemble_Q_net=GaussianMixtureMLP(n_model,n_observations,n_actions,CNN_flag,prior=prior,prior_noise=prior_noise,optimistic_init=optimistic_init,env=env,with_piror=p_net,DP_init=DP_init,p_net=self.Ensemble_Q_net_p,var_net_flag=var_net_flag).to(device)
-        self.Ensemble_Q_net_target=GaussianMixtureMLP(n_model,n_observations,n_actions,CNN_flag,prior=prior,prior_noise=prior_noise,optimistic_init=False,env=env,with_piror=p_net,var_net_flag=var_net_flag).to(device)
+        self.Ensemble_Q_net_p=GaussianMixtureMLP(n_model,n_observations,n_actions,CNN_flag,prior=prior,prior_noise=prior_noise,optimistic_init=False,env=env,with_piror=p_net,var_net_flag=var_net_flag,lr=lr).to(device)
+        self.Ensemble_Q_net=GaussianMixtureMLP(n_model,n_observations,n_actions,CNN_flag,prior=prior,prior_noise=prior_noise,optimistic_init=optimistic_init,env=env,with_piror=p_net,DP_init=DP_init,p_net=self.Ensemble_Q_net_p,var_net_flag=var_net_flag,lr=lr).to(device)
+        self.Ensemble_Q_net_target=GaussianMixtureMLP(n_model,n_observations,n_actions,CNN_flag,prior=prior,prior_noise=prior_noise,optimistic_init=False,env=env,with_piror=p_net,var_net_flag=var_net_flag,lr=lr).to(device)
 
         # dynamic model
+        self.Ensemble_T_net=None
         if T_net:
             self.Ensemble_T_net=GaussianMixtureMLP(n_model,n_observations,n_actions,CNN_flag,prior=prior,prior_noise=prior_noise,optimistic_init=False,env=env,with_piror=False,DP_init=False,p_net=None,var_net_flag=False,T_net=True).to(device)
 
@@ -55,7 +56,6 @@ class DQN_ensemble():
 
         now_epsiode_num=len(self.buffer.cum_R) 
         if self.real_bootstrap:# sample each epsiode
-            self.epsiod_num=now_epsiode_num
             if now_epsiode_num>self.epsiod_num:
                 self.epsiod_num=now_epsiode_num
                 self.action_model_ID=torch.randint(0,self.n_model,(1,)).item()
@@ -67,17 +67,18 @@ class DQN_ensemble():
         if eval==False:
             self.steps_done+=1
 
-        current_state_all_actions=torch.cat((state.repeat(self.n_actions,1),torch.arange(self.n_actions).reshape(self.n_actions,1)),1)
-        next_state_predicts=self.Ensemble_T_net(current_state_all_actions)
-        next_state_predict=next_state_predicts[self.action_model_T_ID].squeeze().reshape(current_state_all_actions.shape[0],-1)
+        next_state_predicts=self.Ensemble_T_net(state)
+        next_state_predict=next_state_predicts[self.action_model_T_ID].squeeze()
+        next_state_predict=torch.mean(next_state_predicts,0)
 
         # compute the extpected value for the predicted next state
-        R=self.Ensemble_Q_net(next_state_predict)+self.with_prior*self.Ensemble_Q_net_p(next_state_predict)
+        R=self.Ensemble_Q_net(next_state_predict.T)+self.with_prior*self.Ensemble_Q_net_p(next_state_predict.T)
         R_sample=R[self.action_model_ID].mean(-1).squeeze() 
 
        
         if self.buffer.reward_detected()<0.5:
             R_sample=torch.var(next_state_predicts.squeeze(),0)
+            # R_sample+=torch.var(next_state_predicts.squeeze(),0)*10
             # m = Categorical(torch.softmax(R_sample,0))
             # action=m.sample().reshape(1,1).detach()
 
@@ -109,8 +110,8 @@ class DQN_ensemble():
             tensor,bool: action,exploration or not
         """
         
-        if self.T_net:
-            return self.select_action_T(state,eval=eval)
+        # if self.T_net:
+        #     return self.select_action_T(state,eval=eval)
             
         state.to(device=device)
         if eval==False:
@@ -124,10 +125,9 @@ class DQN_ensemble():
 
         now_epsiode_num=len(self.buffer.cum_R) 
         if self.real_bootstrap:# sample each epsiode
-            self.epsiod_num=now_epsiode_num
             if now_epsiode_num>self.epsiod_num:
                 self.epsiod_num=now_epsiode_num
-                self.action_model_ID=torch.randint(0,self.n_model,(1,)).item().to(device=device)
+                self.action_model_ID=torch.randint(0,self.n_model,(1,)).item()
             R_sample=R[self.action_model_ID].squeeze().to(device=device)
 
         else:# sample each step
@@ -159,8 +159,13 @@ class DQN_ensemble():
         self.writer.add_scalar("action/Q",R_sample[action],self.steps_done)
         soft_max_r_sample=torch.softmax(R_sample,0)
         self.writer.add_scalar("action/Entropy",torch.sum(-soft_max_r_sample*torch.log(soft_max_r_sample)),self.steps_done)
-        # self.writer.add_scalar("action/Q2",R[1,0],self.steps_done)
-        # self.writer.add_scalar("action/Q3",R[2,0],self.steps_done)
+
+        # a1,a2=self.Ensemble_Q_net(torch.tensor([[3.0]])).mean(0).squeeze()
+        # a14,a24=self.Ensemble_Q_net(torch.tensor([[4.0]])).mean(0).squeeze()
+        # self.writer.add_scalar("action/s3",a1,self.steps_done)
+        # self.writer.add_scalar("action/s4",a24,self.steps_done)
+        # self.writer.add_scalar("action/s3_correct",a24,self.steps_done)
+        # self.writer.add_scalar("action/s4_correct",a14,self.steps_done)
         # self.writer.add_scalar("action/Q4",R[3,0],self.steps_done)
         # self.writer.add_scalar("action/Q5",R[4,0],self.steps_done)
         E=0
@@ -198,8 +203,10 @@ class DQN_ensemble():
         if self.bootstrap==False:
             masks=torch.ones(masks.shape)
         reward_detected=self.buffer.reward_detected()
+        dataset_diversity_slope=self.buffer.dataset_diversity_slope()
         self.writer.add_scalar("CUM_R_STD",reward_detected**0.5,self.steps_done)
-        self.Ensemble_Q_net.optimize_replay(state_batch,next_states,action_batch,reward_batch,dones,masks,self.GAMMA,self.Ensemble_Q_net_target,self.Ensemble_Q_net_p,self.BATCH_SIZE,reward_detected)
+        self.writer.add_scalar("CUM_R_STD_SLOPE",dataset_diversity_slope,self.steps_done)
+        self.Ensemble_Q_net.optimize_replay(state_batch,next_states,action_batch,reward_batch,dones,masks,self.GAMMA,self.Ensemble_Q_net_target,self.Ensemble_Q_net_p,self.BATCH_SIZE,self.Ensemble_T_net,reward_detected)
         if self.T_net:
             self.Ensemble_T_net.optimize_replay_T(state_batch,next_states,action_batch,masks,self.BATCH_SIZE)
 

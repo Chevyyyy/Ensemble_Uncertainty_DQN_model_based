@@ -9,8 +9,8 @@ def get_E_R_S(logfile):
     with open(logfile, 'r') as file:
         for line in file:
             # Process each line
-            R.append(float(line.split()[3]))
-            E.append(float(line.split()[7]))
+            R.append(float(line.split("R:")[-1].split()[0]))
+            E.append(float(line.split("E:")[-1].split()[0]))
             S.append(int(line.split()[-1]))
     return np.array([E]),np.array([R]),np.array([S])
 def get_state(logfile):
@@ -148,7 +148,7 @@ def mean_std_steps(means,w=10,label="",std=False):
     steps=[]
     for i in range(N):
         steps.append(mean_losses[i])
-    std_losses = moving_average(np.std(means, axis=0),100)/10
+    std_losses = moving_average(np.std(means, axis=0),w)/10
 
     # Plot the mean curve
     plt.plot(mean_losses, label=label)

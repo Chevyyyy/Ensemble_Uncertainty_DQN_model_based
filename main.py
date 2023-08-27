@@ -3,7 +3,7 @@ import gym
 import matplotlib.pyplot as plt
 from itertools import count
 import torch
-from networks.deep_endemble_NN_model import GaussianMixtureMLP
+from networks.deep_ensemble_NN_model import GaussianMixtureMLP
 from buffer import ReplayMemory
 from utilis import *
 from logger import set_log_file
@@ -36,14 +36,15 @@ parser.add_argument(
 )
 parser.add_argument(
     "--env",
-    default="DeepSea_5",
+    default="MinAtar/Freeway-v1",
     help="maze-sample-5x5|maze-random-10x10-v0|MountainCarContinuous-v0|CartPole-v1|MountainCar-v0|LunarLander-v2|Acrobot-v1|Pendulum-v1|ALE/Breakout-v5|ALE/MontezumaRevenge-v5|MinAtar/Breakout-v0|MinAtar/Freeway-v1|maze2d-open-v0|DeepSea",
 )
 parser.add_argument("--BATCH_SIZE", type=int, default=64)
-parser.add_argument("--NUM_episodes", type=int, default=5)
+parser.add_argument("--NUM_episodes", type=int, default=600)
+parser.add_argument("--LR", type=float, default=1e-4)
 parser.add_argument("--GAMMA", default=0.99)
 parser.add_argument("--TAU", default=0.005)
-parser.add_argument("--PRINT", default=False)
+parser.add_argument("--buffer", default=30000, type=int)
 parser.add_argument("--render", default=0, type=int)
 parser.add_argument("--device", default="cpu")
 parser.add_argument("--A_Change", type=int, default=0)
@@ -51,19 +52,25 @@ parser.add_argument("--prior", default=0, type=float)
 parser.add_argument("--prior_noise", default=0, type=float)
 parser.add_argument("--NUM_ensemble", default=5)
 parser.add_argument("--ID", default="DEBUG")
+parser.add_argument("--log_folder", default=None)
 parser.add_argument("--foot_record", default=False)
 parser.add_argument("--max_steps", type=int, default=2e8)
+parser.add_argument("--seed", default=0, type=int)
 parser.add_argument("--repeat_average", type=int, default=3)
 parser.add_argument("--eval_intervel", type=int, default=10)
 parser.add_argument("--eval", type=int, default=0)
 parser.add_argument("--OLD_GYM", type=int, default=0)
 parser.add_argument("--no_truncated", type=int, default=0)
 parser.add_argument("--update_intervel", type=int, default=1)
+parser.add_argument("--update_epoch", type=int, default=1)
+
+# the property of the Algorithm
 parser.add_argument("--real_bootstrap", type=int, default=1)
 parser.add_argument("--p_net", type=int, default=0)
 parser.add_argument("--DP_init", type=int, default=0)
 parser.add_argument("--var_net", type=int, default=0)
 parser.add_argument("--T_net", type=int, default=0)
+
 
 args = parser.parse_args()
 def main(args):
@@ -79,19 +86,25 @@ def main(args):
     ###############################################################################################
     # config the args
     # set the log file
-    config = f"{args.model}_{envstr}_prior{args.prior}_std{args.prior_noise}_{args.ID}"
+    config = f"{args.model}_{envstr}_{args.ID}"
     print("###########################")
     print("###########################")
     print("trainning start: ", config)
     print("###########################")
     print("###########################")
-    set_log_file(f"log/{config}.txt")
-    writer = SummaryWriter(f"runs/{envstr}/{config}")
+    if args.log_folder is not None:
+        set_log_file(f"log/{args.log_folder}/{config}.txt")
+    else:
+        set_log_file(f"log/{config}.txt")   
+    if args.log_folder is not None:
+        writer = SummaryWriter(f"runs/{args.log_folder}/{envstr}/{config}")
+    else:
+        writer = SummaryWriter(f"runs/{envstr}/{config}")
     # set env
     if args.env.split("_")[0] == "DeepSea":
         size=int(args.env.split("_")[1])
-        env = DeepSea(size,True)
-        args.update_intervel=size
+        env = DeepSea(size,args.seed)
+        print(env._action_mapping)
     else:
         env = gym.make(args.env)
         if (not args.OLD_GYM) and args.render:
@@ -119,6 +132,7 @@ def main(args):
             GAMMA=args.GAMMA,
             BATCH_SIZE=args.BATCH_SIZE,
             prior=args.prior,
+            buffer_size=args.buffer,
         )
     elif args.model == "PPO":
         agent = PPO(state_shape, n_actions, env, writer, prior=args.prior)
@@ -135,6 +149,7 @@ def main(args):
             prior=args.prior,
             prior_noise=args.prior_noise,
             p_net=args.p_net,
+            buffer_size=args.buffer,
         )
     elif args.model == "bootstrap_DQN":
         agent = DQN_ensemble(
@@ -153,7 +168,10 @@ def main(args):
             real_bootstrap=args.real_bootstrap,
             A_change=args.A_Change,
             var_net_flag=args.var_net,
+            p_net=args.p_net,
             T_net=args.T_net,
+            buffer_size=args.buffer,
+            lr=args.LR,
         )
     elif args.model == "model_1_AI":
         agent = model_1_AI(args.NUM_ensemble, state_shape, n_actions)
@@ -190,13 +208,14 @@ def main(args):
             state_list_deepsea.append(state.squeeze().tolist())
         state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0).to(device=device)
         E_count = 0
-        cum_R_float = 0
+        cum_R_float = 0.0
 
         if steps_done > args.max_steps:
             break
 
 
         for t in count():
+            # print(f"steps_done: {steps_done}")
             steps_done += 1
             if args.foot_record:
                 if steps_done < 20000:
@@ -217,7 +236,7 @@ def main(args):
             cum_R_float += reward
             state_list_deepsea.append(observation.squeeze().tolist())
 
-            reward = torch.tensor([reward]).to(device=device)
+            reward = torch.tensor([reward],dtype=torch.float32).to(device=device)
             terminated = torch.tensor([terminated], dtype=torch.float32).to(device=device)
             action_prob = torch.tensor([action_prob], dtype=torch.float32).to(device=device)
 
@@ -234,7 +253,7 @@ def main(args):
 
             # Store the transition in memory
             agent.buffer.push(
-                state, action, action_prob, next_state, reward, terminated
+                state, action, action_prob, next_state, reward, terminated,1
             )
 
             # Move to the next state
@@ -242,7 +261,8 @@ def main(args):
 
             # update the network
             if steps_done % args.update_intervel == 0:
-                agent.update()
+                for i in range(args.update_epoch):
+                    agent.update()
 
             # if steps_done % 100 == 0:
             #     getRM(model=agent.Ensemble_Q_net,plot=False)
@@ -266,7 +286,7 @@ def main(args):
                 writer.add_scalar("cum R of episode", cum_R_float, i_episode)
                 writer.add_scalar("cum R of steps", cum_R_float, steps_done)
                 writer.add_scalar("E rate", E_count / (t + 1), i_episode)
-                agent.buffer.save_cum_R(cum_R_float)
+                agent.buffer.save_cum_R(float(cum_R_float))
                 break
 
         if args.env.split("_")[0] == "DeepSea" and cum_R_float > 0.9: 
@@ -275,76 +295,111 @@ def main(args):
     print("Complete: ", config)
     return False,i_episode
     
-    
-if __name__ == "__main__":
-    args.NUM_episodes=10000
+ 
+def run_deep_sea():
+    args.NUM_episodes=5000
     args.NUM_ensemble=10
     args.BATCH_SIZE=64
     args.real_bootstrap=0
+    seed_array=np.random.randint(100,size=5)
+    seed_array=[58 ,99 ,43 ,37 ,43]
 
-    f = open(f"DeepSea_{args.ID}.txt", "w",buffering=1)
 
-    # args.model="DQN"
-    # for i in range(5,20): 
-    #     success=0
-    #     args.env="DeepSea_"+str(i)
-    #     args.update_intervel=i
-    #     for j in range(5):
-    #         args.ID="804_"+str(i+1)
-    #         suc,i_epsiode=main(args)
-    #         success+=suc
-    #         msg=f"DeepSea_{i} DQN: solve in {i_epsiode} episode\n"
-    #         f.write(msg)
-    #     if success!=5:
-    #         break
-            
-    
-    # args.model="bootstrap_DQN"
-    # args.p_net=True
-    # for i in range(5,20): 
-    #     success=0
-    #     args.env="DeepSea_"+str(i)
-    #     args.update_intervel=i
-    #     for j in range(5):
-    #         args.ID="bsp804_"+str(i+1)
-    #         suc,i_epsiode=main(args)
-    #         success+=suc
-    #         msg=f"DeepSea_{i} BSP: solve in {i_epsiode} episode\n"
-    #         f.write(msg)
-    #     if success!=5:
-    #         break
+    f = open(f"DeepSea_{args.ID}.txt", "a",buffering=1)
+    f.write(seed_array.__str__()+"\n")
 
-    # args.model="bootstrap_DQN"
-    # args.p_net=True
-    # args.DP_init=True
-    # for i in range(5,20): 
-    #     success=0
-    #     args.env="DeepSea_"+str(i)
-    #     args.update_intervel=i
-    #     for j in range(5):
-    #         args.ID="bsdp804_"+str(i+1)
-    #         suc,i_epsiode=main(args)
-    #         success+=suc
-    #         msg=f"DeepSea_{i} BSDP: solve in {i_epsiode} episode\n"
-    #         f.write(msg)
-    #     if success!=5:
-    #         break
-
-    args.model="bootstrap_DQN"
-    args.p_net=False
-    args.DP_init=False
-    args.T_net=True
-    for i in range(12,20): 
+    args.model="DQN"
+    for i in range(1,15): 
         success=0
         args.env="DeepSea_"+str(i)
         args.update_intervel=i
         for j in range(5):
-            args.ID="mbbsdp804_"+str(i+1)
+            args.seed=seed_array[j]
+            args.ID="804_"+str(j+1)
             suc,i_epsiode=main(args)
             success+=suc
-            msg=f"DeepSea_{i} MBBSDP: solve in {i_epsiode} episode\n"
+            msg=f"DeepSea_{i} random: solve in {i_epsiode} episode\n"
             f.write(msg)
-        if success!=5:
+        if success<5:
             break
 
-    f.close()    
+
+            
+    
+    # args.model="bootstrap_DQN"
+    # args.p_net=False
+    # for i in range(1,15): 
+    #     success=0
+    #     args.env="DeepSea_"+str(i)
+    #     args.update_intervel=i
+    #     for j in range(5):
+    #         args.seed=seed_array[j]
+    #         args.ID="bs804_"+str(j+1)
+    #         suc,i_epsiode=main(args)
+    #         success+=suc
+    #         msg=f"DeepSea_{i} BS: solve in {i_epsiode} episode\n"
+    #         f.write(msg)
+    #     if success<5:
+    #         break
+
+    # args.model="bootstrap_DQN"
+    # args.p_net=True
+    # for i in range(1,15): 
+    #     success=0
+    #     args.env="DeepSea_"+str(i)
+    #     args.update_intervel=i
+    #     for j in range(5):
+    #         args.seed=seed_array[j]
+    #         args.ID="bsp804_"+str(j+1)
+    #         suc,i_epsiode=main(args)
+    #         success+=suc
+    #         msg=f"DeepSea_{i} BSP: solve in {i_epsiode} episode\n"
+    #         f.write(msg)
+    #     if success<5:
+    #         break
+
+
+    # args.model="bootstrap_DQN"
+    # args.p_net=True
+    # args.DP_init=True
+    # for i in range(15,20): 
+    #     success=0
+    #     args.env="DeepSea_"+str(i)
+    #     args.update_intervel=i
+    #     for j in range(5):
+    #         args.seed=seed_array[j]
+    #         args.ID="bsdp804_"+str(j+1)
+    #         suc,i_epsiode=main(args)
+    #         success+=suc
+    #         msg=f"DeepSea_{i} BSDP: solve in {i_epsiode} episode\n"
+    #         f.write(msg)
+    #     if success<5:
+    #         break
+
+    # args.model="bootstrap_DQN"
+    # args.p_net=1
+    # args.DP_init=False
+    # args.T_net=False 
+    # for i in range(5,15): 
+    #     success=0
+    #     args.env="DeepSea_"+str(i)
+    #     args.update_intervel=i
+    #     for j in range(5):
+    #         args.seed=seed_array[j]
+    #         args.ID="mbbsdp804_"+str(j+1)
+    #         suc,i_epsiode=main(args)
+    #         success+=suc
+    #         msg=f"DeepSea_{i} MBBSDP: solve in {i_epsiode} episode\n"
+    #         f.write(msg)
+    #     if success<4:
+    #         break
+
+    f.close()
+
+def run():
+    main(args)
+if __name__ == "__main__":
+    if args.env.split("_")[0] == "DeepSea":
+        run_deep_sea() 
+    else:
+        run()

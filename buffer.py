@@ -1,9 +1,10 @@
 from collections import namedtuple, deque
 import random
 import torch
+import numpy as np
 
 Transition = namedtuple('Transition',
-                        ('state', 'action','action_prob', 'next_state', 'reward',"terminated","mask"))
+                        ('state', 'action','action_prob', 'next_state', 'reward',"terminated","weight","mask"))
 
 
 class ReplayMemory(object):
@@ -27,9 +28,14 @@ class ReplayMemory(object):
         if len(cum_R)<2:
             return 0
         return cum_R.var()
+    def dataset_diversity_slope(self):
+        cum_R=torch.tensor(self.cum_R)
+        cum_R_last=torch.tensor(self.cum_R[:-1])
+        return (cum_R.var()+1e-6)**0.5-(cum_R_last.var()+1e-6)**0.5
 
     def sample(self, batch_size):
-        return random.sample(self.memory, batch_size)
+        weights=self.Transition(*zip(*self.memory)).weight
+        return random.choices(self.memory,weights=weights, k=batch_size)
     
 
     def __len__(self):

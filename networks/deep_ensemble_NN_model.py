@@ -62,7 +62,7 @@ class GaussianMixtureMLP(nn.Module):
         hidden_layers (list of ints): hidden layer sizes
 
     """
-    def __init__(self, num_models=5, inputs=1, outputs=1,CNN_flag=False,prior=0,prior_noise=0,optimistic_init=False,env=None,with_piror=False,DP_init=False,p_net=None,var_net_flag=False,T_net=False):
+    def __init__(self, num_models=5, inputs=1, outputs=1,CNN_flag=False,prior=0,prior_noise=0,optimistic_init=False,env=None,with_piror=False,DP_init=False,p_net=None,var_net_flag=False,T_net=False,lr=1e-4):
         super(GaussianMixtureMLP, self).__init__()
         self.num_models = num_models
         self.inputs = inputs
@@ -73,12 +73,12 @@ class GaussianMixtureMLP(nn.Module):
         if T_net:
             lr=1e-2
         else:
-            lr=1e-4
+            lr=lr
         for i in range(self.num_models):
             if CNN_flag:
-                model = CNN(self.inputs+T_net,self.outputs*(1+var_net_flag)*(1-T_net)+T_net*self.inputs,prior+prior_noise*np.random.normal())
+                model = CNN(self.inputs,self.outputs*(1+var_net_flag),prior+prior_noise*np.random.normal())
             else:
-                model = MLP(self.inputs[0]+T_net,self.outputs*(1+var_net_flag)*(1-T_net)+T_net*self.inputs[0],prior+prior_noise*np.random.normal())
+                model = MLP(self.inputs[0]+T_net,self.outputs*(1+var_net_flag)*(1-T_net)+self.inputs[0]*T_net,prior+prior_noise*np.random.normal())
 
                 
             setattr(self, 'model_'+str(i), model)
@@ -108,7 +108,7 @@ class GaussianMixtureMLP(nn.Module):
             model_i.load_state_dict(model.state_dict())
         
     def diversity_init_T(self):
-        for i in tqdm(range (100)):
+        for i in tqdm(range (500)):
             high=self.env.observation_space.high
             low=self.env.observation_space.low
             s=[]
@@ -136,7 +136,7 @@ class GaussianMixtureMLP(nn.Module):
     def diversity_init(self,p_net):
         """initalzie the networks with diversity to make the softmax output different in each member"""
 
-        for i in tqdm(range (100)):
+        for i in tqdm(range (500)):
             high=self.env.observation_space.high
             low=self.env.observation_space.low
             s=[]
@@ -151,7 +151,7 @@ class GaussianMixtureMLP(nn.Module):
             model_p = getattr(p_net, 'model_' + str(model_index.item()))
             model = getattr(self, 'model_' + str(model_index.item()))
 
-            optim=torch.optim.AdamW(model_p.parameters(),lr=0.01)
+            optim=torch.optim.AdamW(model_p.parameters(),lr=0.005)
             # forward
             if self.var_net_flag:
                 mean = torch.softmax(model(data)[:,:self.outputs]+model_p(data)[:,:self.outputs],dim=1)
@@ -161,25 +161,34 @@ class GaussianMixtureMLP(nn.Module):
                     target=torch.softmax(means.median(0)[0],dim=1)
 
             else:
+                # forward
+                mean = model(data)+model_p(data)
+                mean_plus=model(data+0.05)+model_p(data+0.05)
+                mean_minus=model(data-0.05)+model_p(data-0.05)
+                # compute the second derivate
+                second_derivate=(mean_plus+mean_minus-2*mean)/0.05**2
                 
-                mean = torch.softmax(model(data)+model_p(data),dim=1)
+                mean = torch.softmax(mean,dim=-1)+1e-6
+                means=self(data)+p_net(data)
 
                 with torch.no_grad():
-                    means=self(data)+p_net(data)
-                    target=torch.softmax(means.median(0)[0],dim=1)
+                    target=torch.softmax(means.median(0)[0],dim=-1).detach()+1e-6
 
             # compute the loss    
             optim.zero_grad()
-            # loss=-F.mse_loss(mean,target)*100-means.var(0).mean()*100
-            criterion = nn.KLDivLoss(reduction='batchmean')
-            loss=-criterion(mean,target)
+            kl_loss=self.KL(mean,target)
+            # loss=-torch.clamp(kl_loss,0,0.1).mean()
+
+            nonlinearity_loss=-(second_derivate.abs()).mean()
+            loss=-torch.clamp(kl_loss,0,0.1).mean()+nonlinearity_loss+(means**2).mean()*0.1
             
             # optimize
             loss.backward()
             optim.step()
             
         
-        
+    def KL(self,a,b):
+        return (a*torch.log(a/b)).sum(-1) 
         
         
         
@@ -257,25 +266,26 @@ class GaussianMixtureMLP(nn.Module):
         """compute the KL divergence between two normal distribution"""
         return torch.log(var2**0.5/var1**0.5)+(var1+(mean1-mean2)**2)/(2*var2)-0.5
 
-    def optimize_replay(self,current_state,next_state,action,reward,dones,masks,gamma,target_net,prior_net,batch_size,reward_detected=1):
+    def optimize_replay(self,current_state,next_state,action,reward,dones,masks,gamma,target_net,prior_net,batch_size,T_net,diversity_dataset=1):
 
+        n_actions=self.env.action_space.n
+
+        n_scale=(current_state.max(0)[0]-current_state.min(0)[0])**2+1e-6
 
         self.train()
         loss_all=0
+        self.optim_all.zero_grad() 
         for i in range(self.num_models):
             index=masks[:,i].bool()
             model = getattr(self, 'model_' + str(i))
-            optim = getattr(self, 'optim_' + str(i))
             p_net=getattr(prior_net, 'model_' + str(i))
             t_net_single=getattr(target_net, 'model_' + str(i))
-            
             if self.var_net_flag:
                 # forward
                 n_avial=current_state[index].shape[0]
                 batch_size=min(batch_size,n_avial)
                 mean,var= (model(current_state[index][:batch_size])+self.with_piror*p_net(current_state[index][:batch_size])).split(int(self.outputs),dim=-1)
                 # compute the loss
-                optim.zero_grad()
                 state_action_values = mean.gather(1, action[index][:batch_size]).squeeze().to(device=device)
                 state_action_values_var = torch.relu(var.gather(1, action[index][:batch_size]).squeeze().to(device=device))+1e-6
 
@@ -285,15 +295,15 @@ class GaussianMixtureMLP(nn.Module):
                     next_state_values,action_index=mean_next.max(1)
                     next_state_values_var=torch.relu(var_next.gather(1, action_index.unsqueeze(-1)).squeeze().to(device=device))+1e-6
                 
-                loss_all+=self.KL_normal(state_action_values,state_action_values_var,(1-dones[index][:batch_size].squeeze())*gamma*next_state_values+reward[i],(1-dones[index][:batch_size].squeeze())*gamma*next_state_values_var+1e-6).mean()                   
+                loss_all+=self.KL_normal(state_action_values,state_action_values_var,(1-dones[index][:batch_size].squeeze())*gamma*next_state_values+reward[index][:batch_size],(1-dones[index][:batch_size].squeeze())*gamma*next_state_values_var+1e-6).mean()                   
 
             else:
                 # forward
                 mean= model(current_state[index][:batch_size])+self.with_piror*p_net(current_state[index][:batch_size]).to(device=device)
                 # compute the loss
-                optim.zero_grad()
 
                 state_action_values = mean.gather(1, action[index][:batch_size]).squeeze().to(device=device)
+                advantage_value=state_action_values-mean.mean(1)
 
                 with torch.no_grad():
                     # add prior
@@ -301,28 +311,52 @@ class GaussianMixtureMLP(nn.Module):
                     # mean_next=target_net(next_state[index][:batch_size])+self.with_piror*prior_net(next_state[index][:batch_size])
                     # median_next=mean_next.median(0)[0]
                     # next_state_values,action_index = median_next.max(1)
+                    if T_net:
+                        current_state_action=torch.cat((current_state[index][:batch_size].unsqueeze(1).repeat(1,n_actions,1),torch.arange(n_actions).reshape(1,n_actions,1).repeat(batch_size,1,1)),-1)
+                        next_state_action=torch.cat((next_state[index][:batch_size].unsqueeze(1).repeat(1,n_actions,1),torch.arange(n_actions).reshape(1,n_actions,1).repeat(batch_size,1,1)),-1)
+                        next_state_predict=T_net(current_state_action)
+                        next_next_state_predict=T_net(next_state_action)
+                        # predict_error=(next_state_predict-next_state[index][:batch_size]).pow(2).mean(1)
+                        predict_var=(next_state_predict.var(0).mean(1)/n_scale).mean(1)
+                        predict_var_next=(next_next_state_predict.var(0).mean(1)/n_scale).mean(1)
 
+                        # advantage_var=predict_var.gather(1,action[index][:batch_size]).squeeze()-predict_var.mean(1)
+                                           
+                    
                     # use seperate target network
                     mean_next=t_net_single(next_state[index][:batch_size])+self.with_piror*p_net(next_state[index][:batch_size]).to(device=device)
                     next_state_values,action_index=mean_next.max(1)
+                    # advantage_value_next=next_state_values-mean_next.mean(1)
                     
                     
-                    # mean_next=target_net(next_state[index][:batch_size])[torch.randint(0,5,(1,)).item()]
-                    value_target=(1-dones[index][:batch_size].squeeze())*next_state_values*gamma+reward[i].squeeze().to(device=device)
+                    # mean_next=target_net(next_state[index][:batch_size])[torch.randint(0,5,(1,)).item()]  
+                    if T_net:
+                        IG=predict_var_next.squeeze()-predict_var.squeeze()
+                        # normalise the Information gain
+                        IG=(IG-IG.mean())/IG.std()
+                        # scale the IG with the diversity of dataset
+                        diversity_dataset=torch.FloatTensor([diversity_dataset])
+                        diversity_dataset=torch.clamp(diversity_dataset,0.1,10)
+                        value_target=(1-dones[index][:batch_size].squeeze())*next_state_values*gamma+reward[index][:batch_size].squeeze()+IG/(diversity_dataset)
+                    else:
+                        value_target=(1-dones[index][:batch_size].squeeze())*next_state_values*gamma+reward[index][:batch_size].squeeze()
+                        
+                    # value_target=torch.clamp(advantage_var,0,1)
+                    # value_target=(1-dones[index][:batch_size].squeeze())*next_state_values*gamma+reward[index][:batch_size].squeeze()
                 # loss_all+=((value_target-state_action_values)**2).mean()*(rew ard_detected**0.5+1)/100
-                loss_all+=((value_target-state_action_values)**2).mean().to(device=device)
+                loss_all+=((value_target-state_action_values)**2).mean()
+                    
             
         # optimize
         loss_all.backward()
-        torch.nn.utils.clip_grad_value_(model.parameters(), 100)
         self.optim_all.step()
             
     def optimize_replay_T(self,current_state,next_state,action,masks,batch_size):
 
         n_scale=(current_state.max(0)[0]-current_state.min(0)[0])**2+1e-6
-        n_scale=1
         self.train()
         loss_all=0
+        self.optim_all.zero_grad()
         
         for i in range(self.num_models):
             index=masks[:,i].bool()
@@ -330,8 +364,8 @@ class GaussianMixtureMLP(nn.Module):
             optim = getattr(self, 'optim_' + str(i))
             
             # forward
-            state_action=torch.concatenate((current_state[index][:batch_size],action[index][:batch_size]),axis=1)
-            mean= model(state_action)
+            state_action_pair=torch.cat((current_state[index][:batch_size],action[index][:batch_size]),1)
+            mean= model(state_action_pair)
             # compute the losss
             optim.zero_grad()
 
@@ -339,5 +373,4 @@ class GaussianMixtureMLP(nn.Module):
             
         # optimize
         loss_all.backward()
-        torch.nn.utils.clip_grad_value_(model.parameters(), 100)
         self.optim_all.step()
