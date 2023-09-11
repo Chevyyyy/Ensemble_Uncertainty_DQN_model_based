@@ -45,7 +45,6 @@ class DQN():
         action0=self.Q_net(state).max(1)[1].view(1, 1)
         action1=torch.tensor([[self.env.action_space.sample()]], dtype=torch.long)
 
-        return action1,1,1
         if sample > eps_threshold or eval:
                     return action0,0,1 
         else:

@@ -308,20 +308,20 @@ def run_deep_sea():
     f = open(f"DeepSea_{args.ID}.txt", "a",buffering=1)
     f.write(seed_array.__str__()+"\n")
 
-    args.model="DQN"
-    for i in range(1,15): 
-        success=0
-        args.env="DeepSea_"+str(i)
-        args.update_intervel=i
-        for j in range(5):
-            args.seed=seed_array[j]
-            args.ID="804_"+str(j+1)
-            suc,i_epsiode=main(args)
-            success+=suc
-            msg=f"DeepSea_{i} random: solve in {i_epsiode} episode\n"
-            f.write(msg)
-        if success<5:
-            break
+    # args.model="DQN"
+    # for i in range(1,15): 
+    #     success=0
+    #     args.env="DeepSea_"+str(i)
+    #     args.update_intervel=i
+    #     for j in range(5):
+    #         args.seed=seed_array[j]
+    #         args.ID="804_"+str(j+1)
+    #         suc,i_epsiode=main(args)
+    #         success+=suc
+    #         msg=f"DeepSea_{i} random: solve in {i_epsiode} episode\n"
+    #         f.write(msg)
+    #     if success<5:
+    #         break
 
 
             
@@ -376,23 +376,23 @@ def run_deep_sea():
     #     if success<5:
     #         break
 
-    # args.model="bootstrap_DQN"
-    # args.p_net=1
-    # args.DP_init=False
-    # args.T_net=False 
-    # for i in range(5,15): 
-    #     success=0
-    #     args.env="DeepSea_"+str(i)
-    #     args.update_intervel=i
-    #     for j in range(5):
-    #         args.seed=seed_array[j]
-    #         args.ID="mbbsdp804_"+str(j+1)
-    #         suc,i_epsiode=main(args)
-    #         success+=suc
-    #         msg=f"DeepSea_{i} MBBSDP: solve in {i_epsiode} episode\n"
-    #         f.write(msg)
-    #     if success<4:
-    #         break
+    args.model="bootstrap_DQN"
+    args.p_net=1
+    args.DP_init=0
+    args.T_net=1 
+    for i in range(1,20): 
+        success=0
+        args.env="DeepSea_"+str(i)
+        args.update_intervel=i
+        for j in range(5):
+            args.seed=seed_array[j]
+            args.ID="mbbsdp804_"+str(j+1)
+            suc,i_epsiode=main(args)
+            success+=suc
+            msg=f"DeepSea_{i} DU: solve in {i_epsiode} episode\n"
+            f.write(msg)
+        if success<5:
+            break
 
     f.close()
 

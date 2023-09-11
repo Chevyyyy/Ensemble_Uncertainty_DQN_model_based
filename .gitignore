@@ -1,6 +1,6 @@
 agent/__pycache__
 runs
-log
-imgs
-models_saved
+# log
+# imgs
+# models_saved
 __pycache__

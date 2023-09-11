@@ -1,0 +1,13 @@
+13:33:14,888  0  R: 0.0 step: 5  E: 0.4  Total_steps: 5
+13:33:14,960  1  R: 0.0 step: 5  E: 0.8  Total_steps: 10
+13:33:15,33  2  R: 0.0 step: 5  E: 0.4  Total_steps: 15
+13:33:15,105  3  R: 0.0 step: 5  E: 0.4  Total_steps: 20
+13:33:15,177  4  R: 0.0 step: 5  E: 0.4  Total_steps: 25
+13:33:15,250  5  R: 0.0 step: 5  E: 0.8  Total_steps: 30
+13:33:15,354  6  R: 0.0 step: 5  E: 0.4  Total_steps: 35
+13:33:15,460  7  R: 0.0 step: 5  E: 0.4  Total_steps: 40
+13:33:15,564  8  R: 0.0 step: 5  E: 1.0  Total_steps: 45
+13:33:15,667  9  R: 0.0 step: 5  E: 0.6  Total_steps: 50
+13:33:15,770  10  R: 0.0 step: 5  E: 0.0  Total_steps: 55
+13:33:15,877  11  R: 0.0 step: 5  E: 0.8  Total_steps: 60
+13:33:15,980  12  R: 0.0 step: 5  E: 1.0  Total_steps: 65

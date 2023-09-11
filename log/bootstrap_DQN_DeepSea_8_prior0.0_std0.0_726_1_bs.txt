@@ -1,0 +1,17 @@
+12:03:43,967  0  R: -0.0025 step: 8  E: 0.5  Total_steps: 8
+12:03:44,9  1  R: -0.00875 step: 8  E: 0.375  Total_steps: 16
+12:03:44,50  2  R: -0.00625 step: 8  E: 0.625  Total_steps: 24
+12:03:44,91  3  R: -0.00375 step: 8  E: 0.5  Total_steps: 32
+12:03:44,132  4  R: -0.0025 step: 8  E: 0.5  Total_steps: 40
+12:03:44,176  5  R: -0.005 step: 8  E: 0.625  Total_steps: 48
+12:03:44,224  6  R: -0.005 step: 8  E: 0.625  Total_steps: 56
+12:03:44,265  7  R: -0.00375 step: 8  E: 0.5  Total_steps: 64
+12:03:44,307  8  R: -0.00625 step: 8  E: 0.375  Total_steps: 72
+12:03:44,348  9  R: -0.00875 step: 8  E: 0.375  Total_steps: 80
+12:03:44,388  10  R: -0.0025 step: 8  E: 0.25  Total_steps: 88
+12:03:44,430  11  R: -0.0025 step: 8  E: 0.625  Total_steps: 96
+12:03:44,471  12  R: -0.00375 step: 8  E: 0.625  Total_steps: 104
+12:03:44,513  13  R: -0.00625 step: 8  E: 0.625  Total_steps: 112
+12:03:44,557  14  R: -0.00375 step: 8  E: 0.375  Total_steps: 120
+12:03:44,600  15  R: -0.00375 step: 8  E: 0.5  Total_steps: 128
+12:03:44,662  16  R: 0.99 step: 8  E: 0.25  Total_steps: 136

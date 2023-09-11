@@ -1,0 +1,5 @@
+11:40:53,790  0  R: 0.0 step: 5  E: 0.2  Total_steps: 5
+11:40:53,793  1  R: 0.0 step: 5  E: 0.6  Total_steps: 10
+11:40:53,795  2  R: 0.0 step: 5  E: 0.6  Total_steps: 15
+11:40:53,798  3  R: 0.0 step: 5  E: 0.4  Total_steps: 20
+11:40:53,800  4  R: 1.0 step: 5  E: 0.2  Total_steps: 25
